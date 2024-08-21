@@ -9,6 +9,7 @@ use CodeIgniter\CLI\CLI;
 use Exception;
 use Daycry\Schemas\Exceptions\SchemasException;
 use Daycry\Schemas\Schemas as SchemaLibrary;
+use Daycry\Schemas\Archiver\Handlers\CliHandler;
 
 class Schemas extends BaseCommand
 {
@@ -46,7 +47,7 @@ class Schemas extends BaseCommand
 
         // Determine archive handlers
         if ($params['-print'] ?? CLI::getOption('print')) {
-            $archivers = '\Tatter\Schemas\Archiver\Handlers\CliHandler';
+            $archivers = CliHandler::class;
         } elseif ($archivers = $params['-archive'] ?? CLI::getOption('archive')) {
             $archivers = explode(',', $archivers);
 
@@ -96,7 +97,7 @@ class Schemas extends BaseCommand
             return $name;
         }
 
-        $class = '\Tatter\Schemas\\' . $type . '\Handlers\\' . ucfirst($name) . 'Handler';
+        $class = '\Daycry\Schemas\\' . $type . '\Handlers\\' . ucfirst($name) . 'Handler';
 
         if (! class_exists($class)) {
             throw SchemasException::forUnsupportedHandler($name);

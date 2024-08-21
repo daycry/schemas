@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Daycry\Schemas;
 
+use CodeIgniter\Debug\Timer;
 use Daycry\Schemas\Config\Schemas as SchemasConfig;
 use Daycry\Schemas\Exceptions\SchemasException;
 use Daycry\Schemas\Structures\Schema;
@@ -22,21 +23,21 @@ class Schemas
      *
      * @var Schema|null
      */
-    protected $schema;
+    protected ?Schema $schema;
 
     /**
      * The timer service for benchmarking.
      *
      * @var Timer
      */
-    protected $timer;
+    protected Timer $timer;
 
     /**
      * Array of error messages assigned on failure.
      *
      * @var string[]
      */
-    protected $errors = [];
+    protected array $errors = [];
 
     /**
      * Initiates the library.
@@ -136,22 +137,14 @@ class Schemas
     /**
      * Read in a schema from the given or default handler
      *
-     * @param array|string|null $handler
-     *
      * @return $this
      */
-    public function read($handler = null)
+    public function read()
     {
         $this->timer->start('schema read');
 
-        if (empty($handler)) {
-            $handler = $this->config->readHandler;
-        }
-
-        // Create the reader instance
-        if (is_string($handler)) {
-            $handler = new $handler($this->config);
-        }
+        $handler = $this->config->readHandler;
+        $handler = new $handler($this->config);
 
         $this->errors = array_merge($this->errors, $handler->getErrors());
 
@@ -172,12 +165,12 @@ class Schemas
      *
      * @return $this
      */
-    public function draft($handlers = null)
+    public function draft(array|string|null $handlers = null)
     {
         $this->timer->start('schema draft');
 
         if (empty($handlers)) {
-            $handlers = $this->config->draftHandlers;
+            $handlers = array_keys($this->config->draftHandlers);
         }
 
         // Wrap singletons
@@ -188,7 +181,7 @@ class Schemas
         // Draft and merge the schema from each handler in order
         foreach ($handlers as $handler) {
             if (is_string($handler)) {
-                $handler = new $handler($this->config);
+                $handler = new $this->config->draftHandlers[$handler]($this->config);
             }
 
             if (null === $this->schema) {
@@ -212,12 +205,12 @@ class Schemas
      *
      * @return bool Success or failure
      */
-    public function archive($handlers = null)
+    public function archive(array|string|null $handlers = null): bool
     {
         $this->timer->start('schema archive');
 
         if (empty($handlers)) {
-            $handlers = $this->config->archiveHandlers;
+            $handlers = array_keys($this->config->archiveHandlers);
         }
 
         // Wrap singletons
@@ -230,7 +223,7 @@ class Schemas
 
         foreach ($handlers as $handler) {
             if (is_string($handler)) {
-                $handler = new $handler($this->config);
+                $handler = new $this->config->archiveHandlers[$handler]($this->config);
             }
 
             $result = $result && $handler->archive(clone $this->schema);

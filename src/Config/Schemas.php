@@ -14,42 +14,42 @@ use Daycry\Schemas\Archiver\Handlers\CacheHandler as CacheArchiveHandler;
 class Schemas extends BaseConfig
 {
     // Whether to continue instead of throwing exceptions
-    public $silent = true;
+    public bool $silent = true;
 
     // Which tasks to automate when a schema is not available from the service
-    public $automate = [
+    public array $automate = [
         'draft'   => true,
         'archive' => true,
         'read'    => true,
     ];
 
     // Default handler used to return and read a schema
-    public $readHandler = CacheReadHandler::class;
+    public string $readHandler = CacheReadHandler::class;
 
      // Default handlers used to create a schema (order sensitive)
     // (Probably shouldn't change this unless you really know what you're doing)
-    public $draftHandlers = [
-        DatabaseHandler::class,
-        ModelHandler::class,
-        DirectoryHandler::class,
+    public array $draftHandlers = [
+        'database' => DatabaseHandler::class,
+        'model' => ModelHandler::class,
+        'directory' => DirectoryHandler::class,
     ];
 
     // Path the directoryHandler should scan for schema files
-    public $schemasDirectory = APPPATH . 'Schemas';
+    public string $schemasDirectory = APPPATH . 'Schemas';
 
     // Default handlers to archive copies of the schema
-    public $archiveHandlers = [
-        CacheArchiveHandler::class,
+    public array $archiveHandlers = [
+        'cache' => CacheArchiveHandler::class,
     ];
 
     // Default time-to-live for a stored schema (e.g. Cache) in seconds
-    public $ttl = 14400; // 4 hours
+    public int $ttl = 14400; // 4 hours
 
     // Tables to ignore when creating the schema
-    public $ignoredTables = ['migrations'];
+    public array $ignoredTables = ['migrations'];
 
     // Namespaces to ignore (mostly for ModelHandler)
-    public $ignoredNamespaces = [
+    public array $ignoredNamespaces = [
         'Tests\Support',
         'CodeIgniter\Commands\Generators',
     ];
