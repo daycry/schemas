@@ -178,142 +178,142 @@ class DatabaseHandler extends BaseDrafter implements DrafterInterface
             }
 
             // Check tables flagged as possible pivots
-        foreach ($tableRelations as $tableName) {
-            [$tableName1, $tableName2] = explode('_', $tableName, 2);
+            foreach ($tableRelations as $tableName) {
+                [$tableName1, $tableName2] = explode('_', $tableName, 2);
 
-            // Check for both tables (e.g. `groups_users` must have `groups` and `users`)
-            if (isset($schema->tables->{$tableName1}, $schema->tables->{$tableName2})) {
-                // A match! Look for foreign fields (may not be properly keyed)
-                $fieldName1    = $this->findKeyToForeignTable($schema->tables->{$tableName}, $tableName1);
-                $foreignField1 = $this->findPrimaryKey($schema->tables->{$tableName1});
+                // Check for both tables (e.g. `groups_users` must have `groups` and `users`)
+                if (isset($schema->tables->{$tableName1}, $schema->tables->{$tableName2})) {
+                    // A match! Look for foreign fields (may not be properly keyed)
+                    $fieldName1    = $this->findKeyToForeignTable($schema->tables->{$tableName}, $tableName1);
+                    $foreignField1 = $this->findPrimaryKey($schema->tables->{$tableName1});
 
-                $fieldName2    = $this->findKeyToForeignTable($schema->tables->{$tableName}, $tableName2);
-                $foreignField2 = $this->findPrimaryKey($schema->tables->{$tableName2});
+                    $fieldName2    = $this->findKeyToForeignTable($schema->tables->{$tableName}, $tableName2);
+                    $foreignField2 = $this->findPrimaryKey($schema->tables->{$tableName2});
 
-                // If all fields were found we have a relation
-                if ($fieldName1 && $fieldName2 && $foreignField1 && $foreignField2) {
-                    // Set the table as a pivot & clear its relations
-                    $schema->tables->{$tableName}->pivot     = true;
-                    $schema->tables->{$tableName}->relations = new Mergeable();
-                    $pivotTables[]                           = $tableName;
+                    // If all fields were found we have a relation
+                    if ($fieldName1 && $fieldName2 && $foreignField1 && $foreignField2) {
+                        // Set the table as a pivot & clear its relations
+                        $schema->tables->{$tableName}->pivot     = true;
+                        $schema->tables->{$tableName}->relations = new Mergeable();
+                        $pivotTables[]                           = $tableName;
 
-                    // Build the pivots
-                    $pivot1 = [
-                        $tableName1,      // groups
-                        $foreignField1,   // id
-                        $tableName,       // groups_users
-                        $fieldName1,      // group_id
-                    ];
-                    $pivot2 = [
-                        $tableName,       // groups_users
-                        $fieldName2,      // user_id
-                        $tableName2,      // users
-                        $foreignField2,   // id
-                    ];
-
-                    // Build the relation
-                    $relation         = new Relation();
-                    $relation->type   = 'manyToMany';
-                    $relation->table  = $tableName2;
-                    $relation->pivots = [
-                        $pivot1,
-                        $pivot2,
-                    ];
-
-                    // Add it to the first table
-                    $schema->tables->{$tableName1}->relations->{$tableName2} = $relation;
-
-                    // Build the pivots
-                    $pivot1 = [
-                        $tableName2,      // users
-                        $foreignField2,   // id
-                        $tableName,       // groups_users
-                        $fieldName2,      // user_id
-                    ];
-                    $pivot2 = [
-                        $tableName,       // groups_users
-                        $fieldName1,      // group_id
-                        $tableName1,      // groups
-                        $foreignField1,   // id
-                    ];
-
-                    // Build the relation
-                    $relation         = new Relation();
-                    $relation->type   = 'manyToMany';
-                    $relation->table  = $tableName1;
-                    $relation->pivots = [
-                        $pivot1,
-                        $pivot2,
-                    ];
-
-                    // Add it to the second table
-                    $schema->tables->{$tableName2}->relations->{$tableName1} = $relation;
-                }
-            }
-        }
-
-        // Check fields flagged as possible pivot points (e.g. records->user_id <-> users->id)
-        foreach ($fieldRelations as $tableName1 => $fields) {
-            foreach ($fields as $fieldName) {
-                // Convert to a possible table name
-                $tableName2 = preg_replace('/_id$/', '', $fieldName, 1);
-
-                // Check for the table (e.g. `user_id` must have `users`)
-                if (isset($schema->tables->{$tableName2})) {
-                    // A match! Get the key from the target table
-                    $foreignField = $this->findPrimaryKey($schema->tables->{$tableName2});
-
-                    // If the field was found we have a relation
-                    if ($foreignField) {
-                        // Build the pivot
-                        $pivot = [
-                            $tableName1,     // records
-                            $fieldName,      // user_id
-                            $tableName2,     // users
-                            $foreignField,   // id
+                        // Build the pivots
+                        $pivot1 = [
+                            $tableName1,      // groups
+                            $foreignField1,   // id
+                            $tableName,       // groups_users
+                            $fieldName1,      // group_id
+                        ];
+                        $pivot2 = [
+                            $tableName,       // groups_users
+                            $fieldName2,      // user_id
+                            $tableName2,      // users
+                            $foreignField2,   // id
                         ];
 
                         // Build the relation
-                        $relation            = new Relation();
-                        $relation->type      = 'belongsTo';
-                        $relation->singleton = true;
-                        $relation->table     = $tableName2;
-                        $relation->pivots    = [$pivot];
+                        $relation         = new Relation();
+                        $relation->type   = 'manyToMany';
+                        $relation->table  = $tableName2;
+                        $relation->pivots = [
+                            $pivot1,
+                            $pivot2,
+                        ];
 
                         // Add it to the first table
                         $schema->tables->{$tableName1}->relations->{$tableName2} = $relation;
 
-                        // Build the reverse pivot
-                        $pivot = [
-                            $tableName2,     // users
-                            $foreignField,   // id
-                            $tableName1,     // records
-                            $fieldName,      // user_id
+                        // Build the pivots
+                        $pivot1 = [
+                            $tableName2,      // users
+                            $foreignField2,   // id
+                            $tableName,       // groups_users
+                            $fieldName2,      // user_id
+                        ];
+                        $pivot2 = [
+                            $tableName,       // groups_users
+                            $fieldName1,      // group_id
+                            $tableName1,      // groups
+                            $foreignField1,   // id
                         ];
 
-                        // Build the inverse relation
+                        // Build the relation
                         $relation         = new Relation();
-                        $relation->type   = 'hasMany';
+                        $relation->type   = 'manyToMany';
                         $relation->table  = $tableName1;
-                        $relation->pivots = [$pivot];
+                        $relation->pivots = [
+                            $pivot1,
+                            $pivot2,
+                        ];
 
                         // Add it to the second table
                         $schema->tables->{$tableName2}->relations->{$tableName1} = $relation;
                     }
                 }
             }
-        }
 
-        // Clear pivots from any relations
-        foreach ($pivotTables as $pivotTableName) {
-            // Blank this table's relations
-            $schema->tables->{$pivotTableName}->relations = new Mergeable();
+            // Check fields flagged as possible pivot points (e.g. records->user_id <-> users->id)
+            foreach ($fieldRelations as $tableName1 => $fields) {
+                foreach ($fields as $fieldName) {
+                    // Convert to a possible table name
+                    $tableName2 = preg_replace('/_id$/', '', $fieldName, 1);
 
-            // Remove the table from other relations
-            foreach ($schema->tables as $tableName => $table) {
-                unset($schema->tables->{$tableName}->relations->{$pivotTableName});
+                    // Check for the table (e.g. `user_id` must have `users`)
+                    if (isset($schema->tables->{$tableName2})) {
+                        // A match! Get the key from the target table
+                        $foreignField = $this->findPrimaryKey($schema->tables->{$tableName2});
+
+                        // If the field was found we have a relation
+                        if ($foreignField) {
+                            // Build the pivot
+                            $pivot = [
+                                $tableName1,     // records
+                                $fieldName,      // user_id
+                                $tableName2,     // users
+                                $foreignField,   // id
+                            ];
+
+                            // Build the relation
+                            $relation            = new Relation();
+                            $relation->type      = 'belongsTo';
+                            $relation->singleton = true;
+                            $relation->table     = $tableName2;
+                            $relation->pivots    = [$pivot];
+
+                            // Add it to the first table
+                            $schema->tables->{$tableName1}->relations->{$tableName2} = $relation;
+
+                            // Build the reverse pivot
+                            $pivot = [
+                                $tableName2,     // users
+                                $foreignField,   // id
+                                $tableName1,     // records
+                                $fieldName,      // user_id
+                            ];
+
+                            // Build the inverse relation
+                            $relation         = new Relation();
+                            $relation->type   = 'hasMany';
+                            $relation->table  = $tableName1;
+                            $relation->pivots = [$pivot];
+
+                            // Add it to the second table
+                            $schema->tables->{$tableName2}->relations->{$tableName1} = $relation;
+                        }
+                    }
+                }
             }
-        }
+
+            // Clear pivots from any relations
+            foreach ($pivotTables as $pivotTableName) {
+                // Blank this table's relations
+                $schema->tables->{$pivotTableName}->relations = new Mergeable();
+
+                // Remove the table from other relations
+                foreach ($schema->tables as $tableName => $table) {
+                    unset($schema->tables->{$tableName}->relations->{$pivotTableName});
+                }
+            }
 
             
         }
