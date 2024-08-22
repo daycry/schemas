@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tatter\Schemas\Commands;
+namespace Daycry\Schemas\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 use Exception;
-use Daycry\Schemas\Exceptions\SchemasException;
 use Daycry\Schemas\Schemas as SchemaLibrary;
 use Daycry\Schemas\Archiver\Handlers\CliHandler;
 
@@ -38,11 +37,8 @@ class Schemas extends BaseCommand
         // Determine draft handlers
         if ($drafters = $params['-draft'] ?? CLI::getOption('draft')) {
             $drafters = explode(',', $drafters);
-
-            // Map each name to its handler
-            $drafters = array_map([$this, 'getDraftHandler'], $drafters);
         } else {
-            $drafters = $config->draftHandlers;
+            $drafters = array_keys($config->draftHandlers);
         }
 
         // Determine archive handlers
@@ -50,11 +46,8 @@ class Schemas extends BaseCommand
             $archivers = CliHandler::class;
         } elseif ($archivers = $params['-archive'] ?? CLI::getOption('archive')) {
             $archivers = explode(',', $archivers);
-
-            // Map each name to its handler
-            $archivers = array_map([$this, 'getArchiveHandler'], $archivers);
         } else {
-            $archivers = $config->archiveHandlers;
+            $archivers = array_keys($config->archiveHandlers);
         }
 
         // Try the draft
@@ -82,47 +75,5 @@ class Schemas extends BaseCommand
         }
 
         CLI::write('success', 'green');
-    }
-
-    /**
-     * Try to match a shorthand name to its full handler class
-     *
-     * @param string $type The type of handler (drafter, archiver, etc)
-     * @param string $name The name of the handler
-     */
-    protected function getHandler(string $type, string $name): string
-    {
-        // Check if it is already namespaced
-        if (strpos($name, '\\') !== false) {
-            return $name;
-        }
-
-        $class = '\Daycry\Schemas\\' . $type . '\Handlers\\' . ucfirst($name) . 'Handler';
-
-        if (! class_exists($class)) {
-            throw SchemasException::forUnsupportedHandler($name);
-        }
-
-        return $class;
-    }
-
-    /**
-     * Helper for getHandler
-     *
-     * @param string $name The name of the handler
-     */
-    protected function getDraftHandler(string $name): string
-    {
-        return $this->getHandler('Drafter', $name);
-    }
-
-    /**
-     * Helper for getHandler
-     *
-     * @param string $name The name of the handler
-     */
-    protected function getArchiveHandler(string $name): string
-    {
-        return $this->getHandler('Archiver', $name);
     }
 }
