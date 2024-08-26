@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="C:\Users\46066917X\Documents\GitHub\schemas\phpunit.xml.dist" tests="3" assertions="3" errors="0" failures="0" skipped="0" time="1.871530">
+    <testsuite name="main" tests="3" assertions="3" errors="0" failures="0" skipped="0" time="1.871530">
+      <testsuite name="Tests\Commands\PublishCommandTest" file="C:\Users\46066917X\Documents\GitHub\schemas\tests\Commands\PublishCommandTest.php" tests="1" assertions="1" errors="0" failures="0" skipped="0" time="0.585723">
+        <testcase name="testPublish" file="C:\Users\46066917X\Documents\GitHub\schemas\tests\Commands\PublishCommandTest.php" line="18" class="Tests\Commands\PublishCommandTest" classname="Tests.Commands.PublishCommandTest" assertions="1" time="0.585723"/>
+      </testsuite>
+      <testsuite name="Tests\Commands\SchemaCommandTest" file="C:\Users\46066917X\Documents\GitHub\schemas\tests\Commands\SchemaCommandTest.php" tests="2" assertions="2" errors="0" failures="0" skipped="0" time="1.285807">
+        <testcase name="testSchemaDatabaseDraft" file="C:\Users\46066917X\Documents\GitHub\schemas\tests\Commands\SchemaCommandTest.php" line="21" class="Tests\Commands\SchemaCommandTest" classname="Tests.Commands.SchemaCommandTest" assertions="1" time="0.667246"/>
+        <testcase name="testSchemaModelDraft" file="C:\Users\46066917X\Documents\GitHub\schemas\tests\Commands\SchemaCommandTest.php" line="35" class="Tests\Commands\SchemaCommandTest" classname="Tests.Commands.SchemaCommandTest" assertions="1" time="0.618561"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>

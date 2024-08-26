@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of Daycry Schemas.
+ *
+ * (c) Daycry <daycry9@proton.me>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Daycry\Schemas;
 
 use CodeIgniter\Debug\Timer;
@@ -13,29 +22,23 @@ class Schemas
 {
     /**
      * The current config.
-     *
-     * @var SchemasConfig
      */
     protected SchemasConfig $config;
 
     /**
      * The current schema.
-     *
-     * @var Schema|null
      */
     protected ?Schema $schema;
 
     /**
      * The timer service for benchmarking.
-     *
-     * @var Timer
      */
     protected Timer $timer;
 
     /**
      * Array of error messages assigned on failure.
      *
-     * @var string[]
+     * @var list<string>
      */
     protected array $errors = [];
 
@@ -56,7 +59,7 @@ class Schemas
     /**
      * Return and clear any error messages.
      *
-     * @return string[]
+     * @return list<string>
      */
     public function getErrors(): array
     {
@@ -200,8 +203,6 @@ class Schemas
 
     /**
      * Archive a copy of the current schema using the handler(s)
-     *
-     * @param array|string|null $handlers
      *
      * @return bool Success or failure
      */

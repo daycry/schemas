@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of Daycry Schemas.
+ *
+ * (c) Daycry <daycry9@proton.me>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Daycry\Schemas\Collectors;
 
 use CodeIgniter\Debug\Toolbar\Collectors\BaseCollector;
@@ -50,8 +59,6 @@ class Schema extends BaseCollector
      */
     protected $schema;
 
-    //--------------------------------------------------------------------
-
     /**
      * Load a copy of the schema.
      */
@@ -75,8 +82,6 @@ class Schema extends BaseCollector
         return '(' . (is_countable($this->schema->tables) ? count($this->schema->tables) : 0) . ' tables)';
     }
 
-    //--------------------------------------------------------------------
-
     /**
      * Returns the data of this collector to be formatted in the toolbar
      */
@@ -99,8 +104,6 @@ class Schema extends BaseCollector
         return $html;
     }
 
-    //--------------------------------------------------------------------
-
     /**
      * Gets the "badge" value for the button.
      */
@@ -108,8 +111,6 @@ class Schema extends BaseCollector
     {
         return empty($this->schema->tables) ? 0 : count($this->schema->tables);
     }
-
-    //--------------------------------------------------------------------
 
     /**
      * Display the icon.

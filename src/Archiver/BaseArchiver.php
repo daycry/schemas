@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of Daycry Schemas.
+ *
+ * (c) Daycry <daycry9@proton.me>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Daycry\Schemas\Archiver;
 
 use CodeIgniter\Files\Exceptions\FileNotFoundException;
@@ -20,9 +29,9 @@ abstract class BaseArchiver extends BaseHandler
      *
      * @param string $path The path to the file
      *
-     * @throws FileNotFoundException
-     *
      * @return bool Success or failure
+     *
+     * @throws FileNotFoundException
      */
     protected function putContents($path, string $data): bool
     {

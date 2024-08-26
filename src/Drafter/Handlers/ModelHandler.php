@@ -2,17 +2,26 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of Daycry Schemas.
+ *
+ * (c) Daycry <daycry9@proton.me>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Daycry\Schemas\Drafter\Handlers;
 
 use CodeIgniter\Model;
 use Config\Services;
-use Exception;
 use Daycry\Schemas\Config\Schemas as SchemasConfig;
 use Daycry\Schemas\Drafter\BaseDrafter;
 use Daycry\Schemas\Drafter\DrafterInterface;
 use Daycry\Schemas\Structures\Field;
 use Daycry\Schemas\Structures\Schema;
 use Daycry\Schemas\Structures\Table;
+use Exception;
 
 class ModelHandler extends BaseDrafter implements DrafterInterface
 {
@@ -115,7 +124,7 @@ class ModelHandler extends BaseDrafter implements DrafterInterface
 
             // Get field names from each timestamp attribute
             foreach ($timestamps as $attribute) {
-                $fieldName   = $instance->{$attribute};
+                $fieldName = $instance->{$attribute};
                 /** @var object $field */
                 $field       = new Field($fieldName);
                 $field->type = $instance->dateFormat;
@@ -163,7 +172,7 @@ class ModelHandler extends BaseDrafter implements DrafterInterface
         foreach ($classes as $class) {
             // Check for ignored namespaces
             foreach ($this->config->ignoredNamespaces as $namespace) {
-                if (strpos($class, $namespace) === 0) {
+                if (str_starts_with($class, $namespace)) {
                     continue 2;
                 }
             }

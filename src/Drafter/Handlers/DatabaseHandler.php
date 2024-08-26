@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of Daycry Schemas.
+ *
+ * (c) Daycry <daycry9@proton.me>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Daycry\Schemas\Drafter\Handlers;
 
 use CodeIgniter\Database\BaseConnection;
@@ -78,6 +87,7 @@ class DatabaseHandler extends BaseDrafter implements DrafterInterface
 
             // Strip the prefix and check again`
             $tableName = $this->stripPrefix($tableName);
+            
             if (in_array($tableName, $this->config->ignoredTables, true)) {
                 continue;
             }
@@ -89,7 +99,7 @@ class DatabaseHandler extends BaseDrafter implements DrafterInterface
         // Analyze each table
         foreach ($schema->tables as $table) {
             // Check for a relation table indicator
-            if (strpos($table->name, '_') !== false) {
+            if (str_contains($table->name, '_')) {
                 $tableRelations[] = $table->name;
             }
 
@@ -314,10 +324,9 @@ class DatabaseHandler extends BaseDrafter implements DrafterInterface
                     unset($schema->tables->{$tableName}->relations->{$pivotTableName});
                 }
             }
-
-            
         }
 
+        // Return the schema
         return $schema;
     }
 

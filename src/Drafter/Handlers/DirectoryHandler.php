@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of Daycry Schemas.
+ *
+ * (c) Daycry <daycry9@proton.me>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Daycry\Schemas\Drafter\Handlers;
 
 use CodeIgniter\Config\BaseConfig;
@@ -42,8 +51,6 @@ class DirectoryHandler extends BaseDrafter implements DrafterInterface
 
     /**
      * Scan the schemas directory and process any files found via their handler
-     *
-     * @return Schema
      */
     public function draft(): ?Schema
     {
