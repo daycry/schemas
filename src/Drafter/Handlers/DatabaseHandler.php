@@ -87,7 +87,7 @@ class DatabaseHandler extends BaseDrafter implements DrafterInterface
 
             // Strip the prefix and check again`
             $tableName = $this->stripPrefix($tableName);
-            
+
             if (in_array($tableName, $this->config->ignoredTables, true)) {
                 continue;
             }

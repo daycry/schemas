@@ -34,6 +34,11 @@ abstract class BaseDrafter extends BaseHandler
     public function __construct(?SchemasConfig $config = null)
     {
         parent::__construct($config);
+
+        // Load the inflector helper for singular <-> plural
+        if (! function_exists('singular')) {
+            helper('inflector');
+        }
     }
 
     /**
@@ -73,8 +78,8 @@ abstract class BaseDrafter extends BaseHandler
         $tests = [
             $tableName,
             $tableName . '_id',
-            $tableName,
-            $tableName . '_id',
+            singular($tableName),
+            singular($tableName) . '_id',
         ];
 
         foreach ($tests as $fieldName) {

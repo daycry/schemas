@@ -89,13 +89,19 @@ class DirectoryHandler extends BaseDrafter implements DrafterInterface
      */
     protected function getHandlerForFile(string $path): ?DrafterInterface
     {
-        $extension = pathinfo($path, PATHINFO_EXTENSION);
-        $class     = '\Tatter\Schemas\Drafter\Handlers\\' . ucfirst(strtolower($extension)) . 'Handler';
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
-        if (! class_exists($class)) {
-            return null;
+        if (array_key_exists($extension, $this->config->directoryHandlers)) {
+            $class = $this->config->directoryHandlers[$extension];
+            if (! class_exists($class)) {
+                return null;
+            }
+
+            $class = new $class($this->config, $path);
+
+            return new $class($this->config, $path);
         }
 
-        return new $class($this->config, $path);
+        return null;
     }
 }

@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of Daycry Schemas.
+ *
+ * (c) Daycry <daycry9@proton.me>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Tests\Commands;
 
 use CodeIgniter\CLI\CLI;
@@ -9,6 +18,9 @@ use CodeIgniter\Test\DatabaseTestTrait;
 use CodeIgniter\Test\Mock\MockInputOutput;
 use Tests\Support\TestCase;
 
+/**
+ * @internal
+ */
 final class SchemaCommandTest extends TestCase
 {
     use DatabaseTestTrait;
@@ -25,7 +37,7 @@ final class SchemaCommandTest extends TestCase
         command('schemas -draft database');
 
         $output = $io->getOutput();
-        
+
         $expected = 'success';
         $this->assertStringContainsString($expected, $output);
 
@@ -39,7 +51,7 @@ final class SchemaCommandTest extends TestCase
         command('schemas -draft model');
 
         $output = $io->getOutput();
-        
+
         $expected = 'success';
         $this->assertStringContainsString($expected, $output);
 

@@ -1,7 +1,0 @@
-Publish Command (Tests\Commands\PublishCommand)
- [x] Publish
-
-Schema Command (Tests\Commands\SchemaCommand)
- [x] Schema database draft
- [x] Schema model draft
-

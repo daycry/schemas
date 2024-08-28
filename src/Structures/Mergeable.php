@@ -13,11 +13,11 @@ declare(strict_types=1);
 
 namespace Daycry\Schemas\Structures;
 
+use AllowDynamicProperties;
 use ArrayIterator;
 use Countable;
 use IteratorAggregate;
 use Traversable;
-use AllowDynamicProperties;
 
 #[AllowDynamicProperties]
 class Mergeable implements Countable, IteratorAggregate

@@ -34,6 +34,7 @@
 		<exclude>
 			<directory suffix=".php">./src/Config</directory>
 			<directory suffix=".php">./src/Language</directory>
+			<directory suffix=".php">./src/Collectors</directory>
 		</exclude>
 	</source>
 	<testsuites>

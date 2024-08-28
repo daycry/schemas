@@ -17,6 +17,7 @@ use CodeIgniter\Config\BaseConfig;
 use Daycry\Schemas\Archiver\Handlers\CacheHandler as CacheArchiveHandler;
 use Daycry\Schemas\Drafter\Handlers\DatabaseHandler;
 use Daycry\Schemas\Drafter\Handlers\DirectoryHandler;
+use Daycry\Schemas\Drafter\Handlers\DirectoryHandlers\PhpHandler;
 use Daycry\Schemas\Drafter\Handlers\ModelHandler;
 use Daycry\Schemas\Reader\Handlers\CacheHandler as CacheReadHandler;
 
@@ -41,6 +42,9 @@ class Schemas extends BaseConfig
         'database'  => DatabaseHandler::class,
         'model'     => ModelHandler::class,
         'directory' => DirectoryHandler::class,
+    ];
+    public array $directoryHandlers = [
+        'php' => PhpHandler::class,
     ];
 
     // Path the directoryHandler should scan for schema files
