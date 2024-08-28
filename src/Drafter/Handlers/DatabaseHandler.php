@@ -266,7 +266,7 @@ class DatabaseHandler extends BaseDrafter implements DrafterInterface
             foreach ($fieldRelations as $tableName1 => $fields) {
                 foreach ($fields as $fieldName) {
                     // Convert to a possible table name
-                    $tableName2 = preg_replace('/_id$/', '', $fieldName, 1);
+                    $tableName2 = plural(preg_replace('/_id$/', '', $fieldName, 1));
 
                     // Check for the table (e.g. `user_id` must have `users`)
                     if (isset($schema->tables->{$tableName2})) {
