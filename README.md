@@ -1,7 +1,7 @@
 # schemas
 Schemas for Codeigniter 4
 
-[![Build status](https://github.com/daycry/schemas/actions/workflows/phpunit.yml/badge.svg?branch=master)](https://github.com/daycry/schemas/actions/workflows/php.yml)
+[![Build status](https://github.com/daycry/schemas/actions/workflows/php.yml/badge.svg?branch=master)](https://github.com/daycry/schemas/actions/workflows/php.yml)
 [![Coverage Status](https://coveralls.io/repos/github/daycry/schemas/badge.svg?branch=master)](https://coveralls.io/github/daycry/schemas?branch=master)
 [![Downloads](https://poser.pugx.org/daycry/schemas/downloads)](https://packagist.org/packages/daycry/schemas)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/daycry/schemas)](https://packagist.org/packages/daycry/schemas)
