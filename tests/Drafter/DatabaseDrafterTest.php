@@ -98,9 +98,9 @@ final class DatabaseDrafterTest extends TestCase
 
         $pivot = [
             'lawyers',
-            ['servicer_id'],
+            'servicer_id',
             'servicers',
-            ['id'],
+            'id',
         ];
 
         $this->assertSame([$pivot], $table1->relations->{$table2->name}->pivots);
@@ -115,9 +115,9 @@ final class DatabaseDrafterTest extends TestCase
 
         $pivot = [
             'servicers',
-            ['id'],
+            'id',
             'lawyers',
-            ['servicer_id'],
+            'servicer_id',
         ];
 
         $this->assertSame([$pivot], $table1->relations->{$table2->name}->pivots);
