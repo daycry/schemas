@@ -1,6 +1,13 @@
 # schemas
 Schemas for Codeigniter 4
 
+[![Build status](https://github.com/daycry/schemas/actions/workflows/phpunit.yml/badge.svg?branch=master)](https://github.com/daycry/schemas/actions/workflows/php.yml)
+[![Coverage Status](https://coveralls.io/repos/github/daycry/schemas/badge.svg?branch=master)](https://coveralls.io/github/daycry/schemas?branch=master)
+[![Downloads](https://poser.pugx.org/daycry/schemas/downloads)](https://packagist.org/packages/daycry/schemas)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/daycry/schemas)](https://packagist.org/packages/daycry/schemas)
+[![GitHub stars](https://img.shields.io/github/stars/daycry/schemas)](https://packagist.org/packages/daycry/schemas)
+[![GitHub license](https://img.shields.io/github/license/daycry/schemas)](https://github.com/daycry/schemas/blob/master/LICENSE)
+
 ## Quick Start
 
 1. Install with Composer: `> composer require daycry/schemas`
