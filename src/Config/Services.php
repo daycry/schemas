@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Daycry\Schemas\Config;
 
-use Config\Services as BaseService;
+use CodeIgniter\Config\BaseService;
 use Daycry\Schemas\Config\Schemas as SchemasConfig;
 use Daycry\Schemas\Schemas;
 

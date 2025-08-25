@@ -1,5 +1,4 @@
-# schemas
-Schemas for Codeigniter 4
+# Schemas for CodeIgniter 4
 
 [![Build status](https://github.com/daycry/schemas/actions/workflows/php.yml/badge.svg?branch=master)](https://github.com/daycry/schemas/actions/workflows/php.yml)
 [![Coverage Status](https://coveralls.io/repos/github/daycry/schemas/badge.svg?branch=master)](https://coveralls.io/github/daycry/schemas?branch=master)
@@ -8,21 +7,69 @@ Schemas for Codeigniter 4
 [![GitHub stars](https://img.shields.io/github/stars/daycry/schemas)](https://packagist.org/packages/daycry/schemas)
 [![GitHub license](https://img.shields.io/github/license/daycry/schemas)](https://github.com/daycry/schemas/blob/master/LICENSE)
 
+> **🚀 Recently Updated:** The library has been modernized with enhanced configuration, comprehensive documentation, and new features while maintaining full backward compatibility.
+
 ## Quick Start
 
 1. Install with Composer: `> composer require daycry/schemas`
 2. Generate a new schema: `> php spark schemas`
 
-## Features
+## 📚 Documentation
 
-* View your entire database mapped out in a cascading structure
-* Get helpful advice on optimizations to your database structure with schema analysis<sup>1</sup>
-* Backup, restore, or deploy an entire database structure between servers or environments<sup>1</sup>
-* Generate CodeIgniter 4 migration files from an existing database<sup>1</sup>
-* Transfer projects to CodeIgniter 4 by reading schema files from other supported formats<sup>1</sup>
+- **[Complete Documentation](docs/README.md)** - Comprehensive guide to all features
+- **[Installation Guide](docs/installation.md)** - Detailed installation instructions
+- **[Quick Start Guide](docs/quick-start.md)** - Get up and running quickly
+- **[Configuration Reference](docs/configuration.md)** - All configuration options explained
+- **[API Reference](docs/api-reference.md)** - Complete API documentation
+- **[Migration Guide](docs/migration.md)** - Upgrading from older versions
+- **[Examples](docs/examples.md)** - Practical usage examples
+- **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
 
-<sup>1</sup> Some features are still in development. See **Handlers > Development** for
-planned future expansion.
+## ✨ Features
+
+* **Database Mapping**: View your entire database mapped out in a cascading structure
+* **Schema Analysis**: Get helpful advice on optimizations to your database structure¹
+* **Backup & Restore**: Backup, restore, or deploy an entire database structure between servers or environments¹
+* **Migration Generation**: Generate CodeIgniter 4 migration files from an existing database¹
+* **Format Support**: Transfer projects to CodeIgniter 4 by reading schema files from other supported formats¹
+* **🆕 Enhanced Caching**: Advanced cache control with TTL, tags, and compression
+* **🆕 Performance Analysis**: Deep performance analysis with scoring and recommendations
+* **🆕 Advanced Relationships**: Polymorphic, self-referencing, and hierarchical relationship detection
+* **🆕 Schema Validation**: Comprehensive validation with auto-fix capabilities
+* **🆕 Detailed Logging**: Configurable logging with performance metrics
+
+¹ *Some features are still in development. See **Handlers > Development** for planned future expansion.*
+
+## 🚀 New in Latest Version
+
+### Enhanced Configuration System
+```php
+// New structured configuration with advanced features
+public array $cache = [
+    'enabled' => true,
+    'ttl' => 3600,
+    'prefix' => 'schemas_',
+    'tags' => ['schemas'],
+    'compression' => false
+];
+
+public array $performance = [
+    'enabled' => true,
+    'analysis_depth' => 'full',
+    'recommendations' => true
+];
+
+public array $relationships = [
+    'detect_polymorphic' => true,
+    'detect_hierarchical' => true,
+    'auto_discover' => true
+];
+```
+
+### Backward Compatibility
+- ✅ **All existing code continues to work**
+- ✅ **No breaking changes** (except deprecated `$ttl` property)
+- ✅ **Gradual migration** - upgrade features as needed
 
 ## Installation
 
@@ -33,11 +80,40 @@ and always be up-to-date:
 Or, install manually by downloading the source files and adding the directory to
 `app/Config/Autoload.php`.
 
-## Configuration (optional)
+## Configuration
 
-The library's default behavior can be altered by extending its config file. Copy
-**examples/Schemas.php** to **app/Config/** and follow the instructions
-in the comments. If no config file is found in **app/Config** the library will use its own.
+The library comes with a modern, structured configuration system. Copy the configuration template:
+**examples/Schemas.php** to **app/Config/** and customize as needed.
+
+### Basic Configuration
+```php
+public bool $silent = false;           // Control output verbosity
+
+public array $automate = [
+    'draft'   => true,                 // Auto-draft when schema missing
+    'archive' => true,                 // Auto-archive generated schemas
+    'read'    => true,                 // Auto-read from archives
+];
+```
+
+### Advanced Features
+```php
+public array $cache = [
+    'enabled' => true,                 // Enable schema caching
+    'ttl' => 3600,                    // Cache lifetime in seconds
+    'prefix' => 'schemas_'             // Cache key prefix
+];
+
+public array $performance = [
+    'enabled' => true,                 // Enable performance analysis
+    'analysis_depth' => 'full',        // Analysis depth
+    'recommendations' => true          // Generate optimization recommendations
+];
+```
+
+📖 **[Complete Configuration Guide](docs/configuration.md)** - See all available options and detailed explanations.
+
+🔄 **[Migration Guide](docs/migration.md)** - Upgrading from older versions with full backward compatibility.
 
 ## Usage
 

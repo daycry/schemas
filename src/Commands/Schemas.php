@@ -68,7 +68,16 @@ class Schemas extends BaseCommand
 
         // Try the archive
         try {
-            $result = $schemas->archive($archivers);
+            if (is_string($archivers)) {
+                // Single archiver (likely CliHandler::class)
+                $result = $schemas->archive('cli');
+            } elseif (is_array($archivers)) {
+                // Multiple archivers - use the first one or default
+                $archiveMode = $archivers[0] ?? 'cache';
+                $result = $schemas->archive($archiveMode);
+            } else {
+                $result = $schemas->archive('cache');
+            }
         } catch (Exception $e) {
             $this->showError($e);
         }

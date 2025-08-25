@@ -52,10 +52,10 @@ class CacheHandler extends BaseArchiver implements ArchiverInterface
         // Save each individual table
         foreach ($tables as $table) {
             $schema->tables->{$table->name} = true;
-            $this->cache->save($this->cacheKey . '-' . $table->name, $table, $this->config->ttl);
+            $this->cache->save($this->cacheKey . '-' . $table->name, $table, $this->config->cache['ttl'] ?? 3600);
         }
 
         // Save the scaffold version of the schema
-        return $this->cache->save($this->cacheKey, $schema, $this->config->ttl);
+        return $this->cache->save($this->cacheKey, $schema, $this->config->cache['ttl'] ?? 3600);
     }
 }

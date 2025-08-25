@@ -42,4 +42,44 @@ class SchemasException extends RuntimeException implements ExceptionInterface
     {
         return new static(lang('Schemas.readerNotReady'));
     }
+
+    public static function forInvalidPluginConfiguration(string $pluginName)
+    {
+        return new static("Invalid configuration for plugin '{$pluginName}'");
+    }
+
+    public static function forMissingPlugin(string $pluginName)
+    {
+        return new static("Plugin '{$pluginName}' not found");
+    }
+
+    public static function forPluginDependencyNotMet(string $pluginName, string $dependency)
+    {
+        return new static("Plugin '{$pluginName}' requires dependency '{$dependency}'");
+    }
+
+    public static function forIncompatiblePlugin(string $pluginName, string $version)
+    {
+        return new static("Plugin '{$pluginName}' is not compatible with Schemas version '{$version}'");
+    }
+
+    public static function forPluginAlreadyRegistered(string $pluginName)
+    {
+        return new static("Plugin '{$pluginName}' is already registered");
+    }
+
+    public static function forMissingSchema()
+    {
+        return new static('No schema available for archiving');
+    }
+
+    public static function forMissingArchiveHandler(string $mode)
+    {
+        return new static("Archive handler for mode '{$mode}' not found");
+    }
+
+    public static function forMissingReadHandler(string $extension)
+    {
+        return new static("Read handler for extension '{$extension}' not found");
+    }
 }

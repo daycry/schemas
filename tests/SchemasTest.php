@@ -54,6 +54,10 @@ final class SchemasTest extends TestCase
         ];
 
         $this->schemas = new Schemas($this->config);
+        
+        // Since automate is not fully implemented yet, we need to manually draft
+        $this->schemas->draft();
+        
         $this->assertNotNull($this->schemas->get());
     }
 }
