@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Daycry\Schemas\Async;
 
 use Daycry\Schemas\Async\Handlers\AsyncSchemaHandler;
+use Daycry\Schemas\Async\AsyncHandlerInterface;
 use Daycry\Schemas\Schemas;
 
 /**

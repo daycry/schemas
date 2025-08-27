@@ -21,10 +21,9 @@ class ConfigurationIntegrationTest extends TestCase
         // Verify all new configuration sections exist and work
         $this->assertIsArray($config->cache);
         $this->assertIsArray($config->logging);
-        $this->assertIsArray($config->performance);
         $this->assertIsArray($config->relationships);
         $this->assertIsArray($config->validation);
-        $this->assertIsArray($config->advanced);
+        $this->assertIsArray($config->development);
         
         // Test cache configuration
         $config->cache['enabled'] = true;
@@ -34,12 +33,6 @@ class ConfigurationIntegrationTest extends TestCase
         // Test logging configuration
         $config->logging['enabled'] = true;
         $config->logging['level'] = 'debug';
-        $config->logging['channels'] = ['database', 'cache'];
-        
-        // Test performance configuration
-        $config->performance['lazy_loading'] = true;
-        $config->performance['batch_size'] = 100;
-        $config->performance['memory_limit'] = '256M';
         
         // Test relationships configuration
         $config->relationships['auto_discover'] = true;
@@ -49,12 +42,10 @@ class ConfigurationIntegrationTest extends TestCase
         // Test validation configuration
         $config->validation['strict_mode'] = true;
         $config->validation['auto_fix'] = false;
-        $config->validation['rules'] = ['required_fields', 'data_types'];
         
-        // Test advanced configuration
-        $config->advanced['parallel_processing'] = false;
-        $config->advanced['custom_handlers'] = [];
-        $config->advanced['debug_mode'] = true;
+        // Test development configuration
+        $config->development['schema_diff_tool'] = true;
+        $config->development['migration_generator'] = false;
         
         // Verify that the CacheHandler works with new configuration
         $cacheHandler = new CacheHandler($config);
@@ -115,45 +106,38 @@ class ConfigurationIntegrationTest extends TestCase
         // Verify that configuration matches what's documented
         
         // Cache configuration should match docs
-        $expectedCacheKeys = ['enabled', 'handler', 'ttl', 'prefix', 'tags'];
+        $expectedCacheKeys = ['enabled', 'handler', 'ttl', 'prefix'];
         foreach ($expectedCacheKeys as $key) {
             $this->assertArrayHasKey($key, $config->cache,
                 "Cache configuration should have '$key' key as documented");
         }
         
         // Logging configuration should match docs
-        $expectedLoggingKeys = ['enabled', 'level', 'channels', 'performance_metrics'];
+        $expectedLoggingKeys = ['enabled', 'level'];
         foreach ($expectedLoggingKeys as $key) {
             $this->assertArrayHasKey($key, $config->logging,
                 "Logging configuration should have '$key' key as documented");
         }
         
-        // Performance configuration should match docs
-        $expectedPerformanceKeys = ['enabled', 'analysis_depth', 'score_weights', 'recommendations'];
-        foreach ($expectedPerformanceKeys as $key) {
-            $this->assertArrayHasKey($key, $config->performance,
-                "Performance configuration should have '$key' key as documented");
-        }
-        
         // Relationships configuration should match docs
-        $expectedRelationshipKeys = ['enabled', 'detect_polymorphic', 'detect_self_referencing', 'naming_conventions'];
+        $expectedRelationshipKeys = ['enabled', 'detect_polymorphic', 'detect_many_to_many'];
         foreach ($expectedRelationshipKeys as $key) {
             $this->assertArrayHasKey($key, $config->relationships,
                 "Relationships configuration should have '$key' key as documented");
         }
         
         // Validation configuration should match docs
-        $expectedValidationKeys = ['enabled', 'strict_mode', 'rules', 'auto_fix'];
+        $expectedValidationKeys = ['enabled', 'strict_mode'];
         foreach ($expectedValidationKeys as $key) {
             $this->assertArrayHasKey($key, $config->validation,
                 "Validation configuration should have '$key' key as documented");
         }
         
-        // Advanced configuration should match docs
-        $expectedAdvancedKeys = ['schema_versioning', 'migration_support', 'backup_schemas', 'compression'];
-        foreach ($expectedAdvancedKeys as $key) {
-            $this->assertArrayHasKey($key, $config->advanced,
-                "Advanced configuration should have '$key' key as documented");
+        // Development configuration should match docs
+        $expectedDevelopmentKeys = ['schema_diff_tool', 'migration_generator'];
+        foreach ($expectedDevelopmentKeys as $key) {
+            $this->assertArrayHasKey($key, $config->development,
+                "Development configuration should have '$key' key as documented");
         }
     }
 }

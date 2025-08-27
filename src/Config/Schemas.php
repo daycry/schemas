@@ -15,7 +15,6 @@ namespace Daycry\Schemas\Config;
 
 use CodeIgniter\Config\BaseConfig;
 use Daycry\Schemas\Archiver\Handlers\CacheHandler as CacheArchiveHandler;
-use Daycry\Schemas\Config\ConfigEnvironment;
 use Daycry\Schemas\Drafter\Handlers\DatabaseHandler;
 use Daycry\Schemas\Drafter\Handlers\DirectoryHandler;
 use Daycry\Schemas\Drafter\Handlers\DirectoryHandlers\PhpHandler;
@@ -50,36 +49,13 @@ class Schemas extends BaseConfig
     public bool $silent = true;
 
     /**
-     * Enable schema validation features
-     */
-    public bool $enableValidation = false;
-
-    /**
-     * Enable performance analysis features
-     */
-    public bool $enablePerformanceAnalysis = false;
-
-    /**
-     * Enable intelligent caching with versioning and tags
-     */
-    public bool $enableIntelligentCache = false;
-
-    /**
-     * Enable automatic relationship detection
-     */
-    public bool $enableRelationDetection = true;
-
-    /**
      * Cache configuration
      */
     public array $cache = [
         'enabled' => false,
         'handler' => 'file',
         'ttl' => 3600,
-        'prefix' => 'schemas_',
-        'tags' => ['schemas'],
-        'versioning' => false,
-        'compression' => false
+        'prefix' => 'schemas_'
     ];
 
     /**
@@ -87,27 +63,7 @@ class Schemas extends BaseConfig
      */
     public array $logging = [
         'enabled' => false,
-        'level' => 'info',
-        'channels' => ['file'],
-        'performance_metrics' => true,
-        'query_logging' => false
-    ];
-
-    /**
-     * Performance analysis settings
-     */
-    public array $performance = [
-        'enabled' => false,
-        'analysis_depth' => 'full',
-        'score_weights' => [
-            'indexes' => 0.3,
-            'foreign_keys' => 0.2,
-            'data_types' => 0.2,
-            'table_structure' => 0.15,
-            'query_patterns' => 0.15
-        ],
-        'recommendations' => true,
-        'auto_optimize' => false
+        'level' => 'info'
     ];
 
     /**
@@ -116,15 +72,7 @@ class Schemas extends BaseConfig
     public array $relationships = [
         'enabled' => true,
         'detect_polymorphic' => true,
-        'detect_self_referencing' => true,
-        'detect_many_to_many' => true,
-        'detect_hierarchical' => true,
-        'naming_conventions' => [
-            'foreign_key_suffix' => '_id',
-            'pivot_table_pattern' => '{table1}_{table2}',
-            'polymorphic_type_suffix' => '_type',
-            'polymorphic_id_suffix' => '_id'
-        ]
+        'detect_many_to_many' => true
     ];
 
     /**
@@ -132,28 +80,7 @@ class Schemas extends BaseConfig
      */
     public array $validation = [
         'enabled' => false,
-        'strict_mode' => false,
-        'rules' => [
-            'circular_references' => true,
-            'foreign_key_consistency' => true,
-            'data_type_validation' => true,
-            'index_validation' => true,
-            'constraint_validation' => true,
-            'naming_conventions' => false
-        ],
-        'auto_fix' => false,
-        'custom_rules' => []
-    ];
-
-    /**
-     * Advanced features
-     */
-    public array $advanced = [
-        'schema_versioning' => false,
-        'migration_support' => false,
-        'backup_schemas' => false,
-        'compression' => false,
-        'encryption' => false
+        'strict_mode' => false
     ];
 
     /**
@@ -163,21 +90,9 @@ class Schemas extends BaseConfig
         'enabled' => true,
         'auto_discovery' => true,
         'discovery_paths' => [
-            APPPATH . 'Plugins/Schemas',
-            APPPATH . 'ThirdParty/SchemasPlugins',
+            APPPATH . 'Plugins/Schemas'
         ],
-        'auto_load' => [
-            // Plugin class names to auto-load
-            // 'Daycry\\Schemas\\Plugins\\Examples\\LoggerPlugin',
-        ],
-        'config' => [
-            // Plugin-specific configurations
-            'LoggerPlugin' => [
-                'enabled' => true,
-                'log_level' => 'info',
-                'include_data' => false,
-            ],
-        ],
+        'auto_load' => []
     ];
 
     // ========================================
@@ -188,36 +103,9 @@ class Schemas extends BaseConfig
      * Async processing configuration
      */
     public array $async = [
-        // Enable async processing
         'enabled' => false,
-        
-        // Default handler for async operations
-        'default_handler' => 'schema',
-        
-        // Handlers configuration
-        'handlers' => [
-            'schema' => [
-                'class' => 'Daycry\\Schemas\\Async\\Handlers\\AsyncSchemaHandler',
-                'config' => [
-                    'max_concurrent_jobs' => 3,
-                    'job_timeout' => 300, // 5 minutes
-                    'max_retries' => 3,
-                    'retry_delay' => 5, // seconds
-                    'enable_events' => true,
-                ],
-            ],
-        ],
-        
-        // Cleanup configuration
-        'cleanup_interval' => 3600, // 1 hour
-        
-        // Enable monitoring and statistics
-        'enable_monitoring' => true,
-        
-        // Event listeners for async operations
-        'event_listeners' => [
-            // Add custom event listeners here
-        ],
+        'max_concurrent_jobs' => 3,
+        'job_timeout' => 300
     ];
 
     // ========================================
@@ -285,46 +173,39 @@ class Schemas extends BaseConfig
         'CodeIgniter\Commands\Generators',
     ];
 
-    /**
-     * Advanced Configuration Environment Manager
-     */
-    public ?ConfigEnvironment $configEnvironment = null;
+    // ========================================
+    // Environment Configuration Management
+    // ========================================
 
     /**
-     * Advanced caching configuration (extends existing cache)
+     * Current environment
      */
-    public array $advancedCache = [
-        'enabled' => true,
-        'ttl' => 3600,
-        'prefix' => 'schemas_',
-        'driver' => 'file', // file, database, redis, memcached
-        'invalidation' => [
-            'auto' => true,
-            'events' => ['schema_updated', 'table_modified']
-        ]
-    ];
+    private string $currentEnvironment;
 
     /**
-     * Security configuration
+     * Configuration profiles
      */
-    public array $security = [
-        'enabled' => true,
-        'allowed_operations' => ['read', 'archive', 'draft', 'validate', 'compare', 'merge'],
-        'restricted_tables' => [],
-        'encryption' => [
-            'enabled' => false,
-            'algorithm' => 'AES-256-CBC',
-            'key_rotation' => false
-        ]
-    ];
+    private array $configProfiles = [];
+
+    /**
+     * Runtime configuration overrides
+     */
+    private array $runtimeOverrides = [];
+
+    /**
+     * Configuration validation rules
+     */
+    private array $validationRules = [];
+
+    /**
+     * Configuration change listeners
+     */
+    private array $configListeners = [];
 
     /**
      * Development tools configuration
      */
     public array $development = [
-        'debug_mode' => false,
-        'query_debugging' => false,
-        'profiler' => false,
         'schema_diff_tool' => true,
         'migration_generator' => true
     ];
@@ -336,35 +217,21 @@ class Schemas extends BaseConfig
     {
         parent::__construct();
         
-        // Initialize advanced configuration environment
-        $this->initializeConfigEnvironment();
+        // Initialize environment configuration
+        $this->initializeEnvironmentConfiguration();
         
         // Apply environment-specific configuration
         $this->applyEnvironmentConfiguration();
     }
 
     /**
-     * Initialize the configuration environment manager
+     * Initialize the environment configuration system
      */
-    private function initializeConfigEnvironment(): void
+    private function initializeEnvironmentConfiguration(): void
     {
-        $environment = ENVIRONMENT ?? 'development';
-        $this->configEnvironment = new ConfigEnvironment($environment);
-        
-        // Set base configuration from current properties
-        $baseConfig = [
-            'plugins' => $this->plugins,
-            'async' => $this->async,
-            'cache' => $this->cache, // Use existing cache property
-            'advancedCache' => $this->advancedCache,
-            'logging' => $this->logging,
-            'validation' => $this->validation,
-            'performance' => $this->performance,
-            'security' => $this->security,
-            'development' => $this->development
-        ];
-        
-        $this->configEnvironment->setBaseConfig($baseConfig);
+        $this->currentEnvironment = ENVIRONMENT ?? 'development';
+        $this->initializeDefaultProfiles();
+        $this->initializeValidationRules();
     }
 
     /**
@@ -372,21 +239,14 @@ class Schemas extends BaseConfig
      */
     private function applyEnvironmentConfiguration(): void
     {
-        if (!$this->configEnvironment) {
-            return;
-        }
-
-        $compiledConfig = $this->configEnvironment->getCompiledConfig();
+        $compiledConfig = $this->getCompiledConfig();
 
         // Update properties with compiled configuration
         $this->plugins = $compiledConfig['plugins'] ?? $this->plugins;
         $this->async = $compiledConfig['async'] ?? $this->async;
         $this->cache = $compiledConfig['cache'] ?? $this->cache;
-        $this->advancedCache = $compiledConfig['advancedCache'] ?? $this->advancedCache;
         $this->logging = $compiledConfig['logging'] ?? $this->logging;
         $this->validation = $compiledConfig['validation'] ?? $this->validation;
-        $this->performance = $compiledConfig['performance'] ?? $this->performance;
-        $this->security = $compiledConfig['security'] ?? $this->security;
         $this->development = $compiledConfig['development'] ?? $this->development;
     }
 
@@ -395,11 +255,8 @@ class Schemas extends BaseConfig
      */
     public function get(string $key, $default = null)
     {
-        if ($this->configEnvironment) {
-            return $this->configEnvironment->get($key, $default);
-        }
-
-        return $default;
+        $config = $this->getCompiledConfig();
+        return $this->getNestedValue($config, $key, $default);
     }
 
     /**
@@ -407,10 +264,9 @@ class Schemas extends BaseConfig
      */
     public function setRuntimeConfig(string $key, $value): void
     {
-        if ($this->configEnvironment) {
-            $this->configEnvironment->setRuntimeOverride($key, $value);
-            $this->applyEnvironmentConfiguration();
-        }
+        $this->setNestedValue($this->runtimeOverrides, $key, $value);
+        $this->applyEnvironmentConfiguration();
+        $this->notifyListeners('runtime_override', ['key' => $key, 'value' => $value]);
     }
 
     /**
@@ -418,7 +274,7 @@ class Schemas extends BaseConfig
      */
     public function getEnvironment(): string
     {
-        return $this->configEnvironment ? $this->configEnvironment->getEnvironment() : 'unknown';
+        return $this->currentEnvironment;
     }
 
     /**
@@ -426,10 +282,9 @@ class Schemas extends BaseConfig
      */
     public function switchEnvironment(string $environment): void
     {
-        if ($this->configEnvironment) {
-            $this->configEnvironment->setEnvironment($environment);
-            $this->applyEnvironmentConfiguration();
-        }
+        $this->currentEnvironment = $environment;
+        $this->applyEnvironmentConfiguration();
+        $this->notifyListeners('environment_changed', ['environment' => $environment]);
     }
 
     /**
@@ -437,9 +292,9 @@ class Schemas extends BaseConfig
      */
     public function createProfile(string $name, array $config): void
     {
-        if ($this->configEnvironment) {
-            $this->configEnvironment->setProfile($name, $config);
-        }
+        $this->validateConfiguration($config);
+        $this->configProfiles[$name] = $config;
+        $this->notifyListeners('profile_updated', ['profile' => $name, 'config' => $config]);
     }
 
     /**
@@ -447,10 +302,33 @@ class Schemas extends BaseConfig
      */
     public function exportConfig(string $filepath, string $format = 'json'): bool
     {
-        if ($this->configEnvironment) {
-            return $this->configEnvironment->exportToFile($filepath, $format);
+        $config = $this->getCompiledConfig();
+        
+        try {
+            switch ($format) {
+                case 'json':
+                    file_put_contents($filepath, json_encode($config, JSON_PRETTY_PRINT));
+                    break;
+                case 'php':
+                    file_put_contents($filepath, "<?php\n\nreturn " . var_export($config, true) . ";\n");
+                    break;
+                case 'yaml':
+                    if (function_exists('yaml_emit_file')) {
+                        yaml_emit_file($filepath, $config);
+                    } else {
+                        throw new \RuntimeException('YAML extension not available');
+                    }
+                    break;
+                default:
+                    throw new \InvalidArgumentException("Unsupported format: {$format}");
+            }
+            
+            $this->notifyListeners('config_exported', ['filepath' => $filepath, 'format' => $format]);
+            return true;
+        } catch (\Exception $e) {
+            $this->notifyListeners('config_export_failed', ['error' => $e->getMessage()]);
+            return false;
         }
-        return false;
     }
 
     /**
@@ -458,13 +336,39 @@ class Schemas extends BaseConfig
      */
     public function importConfig(string $filepath, string $format = 'json'): bool
     {
-        if ($this->configEnvironment) {
-            $result = $this->configEnvironment->importFromFile($filepath, $format);
-            if ($result) {
-                $this->applyEnvironmentConfiguration();
-            }
-            return $result;
+        if (!file_exists($filepath)) {
+            return false;
         }
+
+        try {
+            switch ($format) {
+                case 'json':
+                    $config = json_decode(file_get_contents($filepath), true);
+                    break;
+                case 'php':
+                    $config = include $filepath;
+                    break;
+                case 'yaml':
+                    if (function_exists('yaml_parse_file')) {
+                        $config = yaml_parse_file($filepath);
+                    } else {
+                        throw new \RuntimeException('YAML extension not available');
+                    }
+                    break;
+                default:
+                    throw new \InvalidArgumentException("Unsupported format: {$format}");
+            }
+
+            if (is_array($config)) {
+                // Merge with current configuration
+                $this->mergeConfiguration($config);
+                $this->notifyListeners('config_imported', ['filepath' => $filepath, 'format' => $format]);
+                return true;
+            }
+        } catch (\Exception $e) {
+            $this->notifyListeners('config_import_failed', ['error' => $e->getMessage()]);
+        }
+
         return false;
     }
 
@@ -473,9 +377,10 @@ class Schemas extends BaseConfig
      */
     public function addConfigListener(string $event, callable $listener): void
     {
-        if ($this->configEnvironment) {
-            $this->configEnvironment->addListener($event, $listener);
+        if (!isset($this->configListeners[$event])) {
+            $this->configListeners[$event] = [];
         }
+        $this->configListeners[$event][] = $listener;
     }
 
     /**
@@ -483,10 +388,12 @@ class Schemas extends BaseConfig
      */
     public function createSnapshot(): array
     {
-        if ($this->configEnvironment) {
-            return $this->configEnvironment->createSnapshot();
-        }
-        return [];
+        return [
+            'environment' => $this->currentEnvironment,
+            'profiles' => $this->configProfiles,
+            'runtime_overrides' => $this->runtimeOverrides,
+            'timestamp' => time()
+        ];
     }
 
     /**
@@ -494,10 +401,12 @@ class Schemas extends BaseConfig
      */
     public function restoreSnapshot(array $snapshot): void
     {
-        if ($this->configEnvironment) {
-            $this->configEnvironment->restoreFromSnapshot($snapshot);
-            $this->applyEnvironmentConfiguration();
-        }
+        $this->currentEnvironment = $snapshot['environment'] ?? 'development';
+        $this->configProfiles = $snapshot['profiles'] ?? [];
+        $this->runtimeOverrides = $snapshot['runtime_overrides'] ?? [];
+        
+        $this->applyEnvironmentConfiguration();
+        $this->notifyListeners('config_restored', ['snapshot' => $snapshot]);
     }
 
     /**
@@ -505,15 +414,11 @@ class Schemas extends BaseConfig
      */
     public function getConfigStats(): array
     {
-        if (!$this->configEnvironment) {
-            return [];
-        }
-
-        $compiledConfig = $this->configEnvironment->getCompiledConfig();
+        $compiledConfig = $this->getCompiledConfig();
         
         return [
             'environment' => $this->getEnvironment(),
-            'profiles_available' => $this->configEnvironment->getProfiles(),
+            'profiles_available' => array_keys($this->configProfiles),
             'total_config_keys' => $this->countConfigKeys($compiledConfig),
             'cache_enabled' => $this->cache['enabled'] ?? false,
             'async_enabled' => $this->async['enabled'] ?? false,
@@ -521,6 +426,285 @@ class Schemas extends BaseConfig
             'debug_mode' => $this->development['debug_mode'] ?? false,
             'last_updated' => date('Y-m-d H:i:s')
         ];
+    }
+
+    // ========================================
+    // Private Configuration Management Methods
+    // ========================================
+
+    /**
+     * Get the compiled configuration for current environment
+     */
+    private function getCompiledConfig(): array
+    {
+        $config = [
+            'plugins' => $this->plugins,
+            'async' => $this->async,
+            'cache' => $this->cache,
+            'logging' => $this->logging,
+            'validation' => $this->validation,
+            'development' => $this->development
+        ];
+
+        // Apply environment-specific profile
+        if (isset($this->configProfiles[$this->currentEnvironment])) {
+            $config = $this->mergeConfigurations($config, $this->configProfiles[$this->currentEnvironment]);
+        }
+
+        // Apply runtime overrides
+        $config = $this->mergeConfigurations($config, $this->runtimeOverrides);
+
+        // Apply environment variables
+        $config = $this->applyEnvironmentVariables($config);
+
+        return $config;
+    }
+
+    /**
+     * Initialize default configuration profiles
+     */
+    private function initializeDefaultProfiles(): void
+    {
+        // Development profile
+        $this->configProfiles['development'] = [
+            'debug' => true,
+            'cache' => [
+                'enabled' => false,
+                'ttl' => 300
+            ],
+            'async' => [
+                'enabled' => false,
+                'max_concurrent_jobs' => 1,
+                'job_timeout' => 30
+            ],
+            'plugins' => [
+                'enabled' => true,
+                'auto_discover' => true
+            ],
+            'logging' => [
+                'level' => 'debug',
+                'channels' => ['file', 'console']
+            ]
+        ];
+
+        // Production profile
+        $this->configProfiles['production'] = [
+            'debug' => false,
+            'cache' => [
+                'enabled' => true,
+                'ttl' => 3600
+            ],
+            'async' => [
+                'enabled' => true,
+                'max_concurrent_jobs' => 5,
+                'job_timeout' => 300,
+                'cleanup_interval' => 3600
+            ],
+            'plugins' => [
+                'enabled' => true,
+                'auto_discover' => false
+            ],
+            'logging' => [
+                'level' => 'error',
+                'channels' => ['file']
+            ]
+        ];
+
+        // Testing profile
+        $this->configProfiles['testing'] = [
+            'debug' => true,
+            'cache' => [
+                'enabled' => false,
+                'ttl' => 60
+            ],
+            'async' => [
+                'enabled' => false,
+                'max_concurrent_jobs' => 1,
+                'job_timeout' => 10
+            ],
+            'plugins' => [
+                'enabled' => false,
+                'auto_discover' => false
+            ],
+            'logging' => [
+                'level' => 'info',
+                'channels' => ['memory']
+            ]
+        ];
+    }
+
+    /**
+     * Initialize configuration validation rules
+     */
+    private function initializeValidationRules(): void
+    {
+        $this->validationRules['cache.ttl'] = [
+            'validator' => function($value) {
+                return is_int($value) && $value > 0;
+            },
+            'message' => 'Cache TTL must be a positive integer'
+        ];
+
+        $this->validationRules['async.max_concurrent_jobs'] = [
+            'validator' => function($value) {
+                return is_int($value) && $value > 0 && $value <= 10;
+            },
+            'message' => 'Max concurrent jobs must be between 1 and 10'
+        ];
+
+        $this->validationRules['logging.level'] = [
+            'validator' => function($value) {
+                return in_array($value, ['debug', 'info', 'warning', 'error', 'critical']);
+            },
+            'message' => 'Logging level must be one of: debug, info, warning, error, critical'
+        ];
+    }
+
+    /**
+     * Validate configuration against defined rules
+     */
+    private function validateConfiguration(array $config): void
+    {
+        foreach ($this->validationRules as $key => $rule) {
+            if ($this->hasNestedKey($config, $key)) {
+                $value = $this->getNestedValue($config, $key);
+                if (!$rule['validator']($value)) {
+                    throw new \InvalidArgumentException($rule['message']);
+                }
+            }
+        }
+    }
+
+    /**
+     * Merge two configuration arrays
+     */
+    private function mergeConfigurations(array $base, array $override): array
+    {
+        foreach ($override as $key => $value) {
+            if (is_array($value) && isset($base[$key]) && is_array($base[$key])) {
+                $base[$key] = $this->mergeConfigurations($base[$key], $value);
+            } else {
+                $base[$key] = $value;
+            }
+        }
+        return $base;
+    }
+
+    /**
+     * Merge configuration (helper for import)
+     */
+    private function mergeConfiguration(array $config): void
+    {
+        foreach ($config as $section => $values) {
+            if (property_exists($this, $section) && is_array($values)) {
+                $this->$section = $this->mergeConfigurations($this->$section, $values);
+            }
+        }
+    }
+
+    /**
+     * Apply environment variables to configuration
+     */
+    private function applyEnvironmentVariables(array $config): array
+    {
+        // Apply SCHEMAS_ prefixed environment variables
+        foreach ($_ENV as $key => $value) {
+            if (strpos($key, 'SCHEMAS_') === 0) {
+                $configKey = strtolower(str_replace(['SCHEMAS_', '_'], ['', '.'], $key));
+                $this->setNestedValue($config, $configKey, $this->parseEnvValue($value));
+            }
+        }
+
+        return $config;
+    }
+
+    /**
+     * Parse environment variable value
+     */
+    private function parseEnvValue(string $value)
+    {
+        // Handle boolean values
+        if (in_array(strtolower($value), ['true', 'false'])) {
+            return strtolower($value) === 'true';
+        }
+
+        // Handle numeric values
+        if (is_numeric($value)) {
+            return strpos($value, '.') !== false ? (float)$value : (int)$value;
+        }
+
+        // Handle JSON values
+        if (($json = json_decode($value, true)) !== null) {
+            return $json;
+        }
+
+        return $value;
+    }
+
+    /**
+     * Get nested array value using dot notation
+     */
+    private function getNestedValue(array $array, string $key, $default = null)
+    {
+        $keys = explode('.', $key);
+        $value = $array;
+
+        foreach ($keys as $k) {
+            if (!is_array($value) || !array_key_exists($k, $value)) {
+                return $default;
+            }
+            $value = $value[$k];
+        }
+
+        return $value;
+    }
+
+    /**
+     * Set nested array value using dot notation
+     */
+    private function setNestedValue(array &$array, string $key, $value): void
+    {
+        $keys = explode('.', $key);
+        $current = &$array;
+
+        foreach ($keys as $k) {
+            if (!isset($current[$k]) || !is_array($current[$k])) {
+                $current[$k] = [];
+            }
+            $current = &$current[$k];
+        }
+
+        $current = $value;
+    }
+
+    /**
+     * Check if nested key exists using dot notation
+     */
+    private function hasNestedKey(array $array, string $key): bool
+    {
+        $keys = explode('.', $key);
+        $current = $array;
+
+        foreach ($keys as $k) {
+            if (!is_array($current) || !array_key_exists($k, $current)) {
+                return false;
+            }
+            $current = $current[$k];
+        }
+
+        return true;
+    }
+
+    /**
+     * Notify configuration change listeners
+     */
+    private function notifyListeners(string $event, array $data = []): void
+    {
+        if (isset($this->configListeners[$event])) {
+            foreach ($this->configListeners[$event] as $listener) {
+                $listener($data);
+            }
+        }
     }
 
     /**

@@ -32,37 +32,41 @@
 * **Backup & Restore**: Backup, restore, or deploy an entire database structure between servers or environments¹
 * **Migration Generation**: Generate CodeIgniter 4 migration files from an existing database¹
 * **Format Support**: Transfer projects to CodeIgniter 4 by reading schema files from other supported formats¹
-* **🆕 Enhanced Caching**: Advanced cache control with TTL, tags, and compression
-* **🆕 Performance Analysis**: Deep performance analysis with scoring and recommendations
-* **🆕 Advanced Relationships**: Polymorphic, self-referencing, and hierarchical relationship detection
-* **🆕 Schema Validation**: Comprehensive validation with auto-fix capabilities
-* **🆕 Detailed Logging**: Configurable logging with performance metrics
+* **🆕 Streamlined Caching**: Simple, efficient cache control with TTL and prefixes
+* **🆕 Relationship Detection**: Polymorphic and many-to-many relationship detection
+* **🆕 Schema Validation**: Basic validation with configurable strict mode
+* **🆕 Async Processing**: Background processing for large schema operations
+* **🆕 Plugin System**: Extensible architecture with event-driven plugins
 
 ¹ *Some features are still in development. See **Handlers > Development** for planned future expansion.*
 
-## 🚀 New in Latest Version
+## 🚀 Latest Version - Simplified & Optimized
 
-### Enhanced Configuration System
+### Streamlined Configuration System
 ```php
-// New structured configuration with advanced features
+// Simplified, focused configuration
 public array $cache = [
-    'enabled' => true,
+    'enabled' => false,
+    'handler' => 'file',
     'ttl' => 3600,
-    'prefix' => 'schemas_',
-    'tags' => ['schemas'],
-    'compression' => false
+    'prefix' => 'schemas_'
 ];
 
-public array $performance = [
-    'enabled' => true,
-    'analysis_depth' => 'full',
-    'recommendations' => true
+public array $logging = [
+    'enabled' => false,
+    'level' => 'info'
 ];
 
 public array $relationships = [
+    'enabled' => true,
     'detect_polymorphic' => true,
-    'detect_hierarchical' => true,
-    'auto_discover' => true
+    'detect_many_to_many' => true
+];
+
+public array $async = [
+    'enabled' => false,
+    'max_concurrent_jobs' => 3,
+    'job_timeout' => 300
 ];
 ```
 
@@ -99,15 +103,23 @@ public array $automate = [
 ### Advanced Features
 ```php
 public array $cache = [
-    'enabled' => true,                 // Enable schema caching
-    'ttl' => 3600,                    // Cache lifetime in seconds
-    'prefix' => 'schemas_'             // Cache key prefix
+    'enabled' => false,               // Enable schema caching
+    'ttl' => 3600,                   // Cache lifetime in seconds
+    'prefix' => 'schemas_'            // Cache key prefix
 ];
 
-public array $performance = [
-    'enabled' => true,                 // Enable performance analysis
-    'analysis_depth' => 'full',        // Analysis depth
-    'recommendations' => true          // Generate optimization recommendations
+public array $async = [
+    'enabled' => false,               // Enable async processing
+    'max_concurrent_jobs' => 3,       // Maximum concurrent jobs
+    'job_timeout' => 300              // Job timeout in seconds
+];
+
+public array $plugins = [
+    'enabled' => true,                // Enable plugin system
+    'auto_discovery' => true,         // Auto-discover plugins
+    'discovery_paths' => [            // Plugin discovery paths
+        APPPATH . 'Plugins/Schemas'
+    ]
 ];
 ```
 
