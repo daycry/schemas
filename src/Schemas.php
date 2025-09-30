@@ -16,7 +16,9 @@ namespace Daycry\Schemas;
 use CodeIgniter\Debug\Timer;
 use Daycry\Schemas\Config\Schemas as SchemasConfig;
 use Daycry\Schemas\Exceptions\SchemasException;
+use Daycry\Schemas\Reader\Handlers\CacheHandler;
 use Daycry\Schemas\Structures\Schema;
+use Throwable;
 
 // Events removed in minimal core
 
@@ -257,6 +259,40 @@ class Schemas
     }
 
     /**
+     * Load schema from cache if not already in memory.
+     *
+     * Attempts to load the schema from cache if the current schema is null.
+     * If cache is empty or unavailable, returns null.
+     * If schema is already loaded in memory, returns it directly.
+     *
+     * @return Schema|null The loaded schema or null if unavailable
+     */
+    public function load(): ?Schema
+    {
+        // If already loaded, return it
+        if ($this->schema !== null) {
+            return $this->schema;
+        }
+
+        // Try to load from cache
+        try {
+            $reader = new CacheHandler($this->config);
+            if ($reader->ready()) {
+                $this->schema = new Schema($reader);
+
+                return $this->schema;
+            }
+        } catch (Throwable $e) {
+            // Silently fail in minimal core mode
+            if (! $this->config->silent) {
+                $this->errors[] = 'Failed to load schema from cache: ' . $e->getMessage();
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Returns an appropriate Reader based on the given file or directory.
      */
     protected function readerFromPath(string $path): mixed
@@ -271,6 +307,4 @@ class Schemas
 
         return new $className($this->config);
     }
-
-    // Plugin system removed; no plugin manager or event emission
 }

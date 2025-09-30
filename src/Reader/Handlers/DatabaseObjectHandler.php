@@ -118,7 +118,7 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     protected function fetchViews(): void
     {
-        $driver = get_class($this->db);
+        $driver = $this->getDriverClass();
 
         if (str_contains($driver, 'MySQLi')) {
             $this->fetchMySQLViews();
@@ -239,7 +239,7 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     protected function fetchProcedures(): void
     {
-        $driver = get_class($this->db);
+        $driver = $this->getDriverClass();
 
         if (str_contains($driver, 'MySQLi')) {
             $this->fetchMySQLProcedures();
@@ -335,7 +335,7 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     protected function fetchTriggers(): void
     {
-        $driver = get_class($this->db);
+        $driver = $this->getDriverClass();
 
         if (str_contains($driver, 'MySQLi')) {
             $this->fetchMySQLTriggers();
@@ -528,5 +528,15 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
     public function __isset(string $name): bool
     {
         return $this->objects && property_exists($this->objects, $name);
+    }
+
+    /**
+     * Driver class name indirection for testability.
+     * Subclasses in tests can override this to simulate specific drivers
+     * (MySQLi/Postgre/SQLite3) without needing real connections.
+     */
+    protected function getDriverClass(): string
+    {
+        return get_class($this->db);
     }
 }

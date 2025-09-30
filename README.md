@@ -15,10 +15,15 @@
    `composer require daycry/schemas`
 2. Generate and cache a schema (database + models) via spark:
    `php spark schemas -draft database,model -archive cache`
-3. Fetch it in your code:
-   ```php
-   $schema = service('schemas')->get();
-   ```
+3. Fetch it (try cache first, draft if missing):
+    ```php
+    $schemas = service('schemas');
+    $schema  = $schemas->load()->get(); // load() attempts cache (if archived previously)
+    if (! $schema) {
+         $schemas->draft()->archive('cache');
+         $schema = $schemas->get();
+    }
+    ```
 
 ## Core Feature Summary
 
@@ -109,7 +114,8 @@ Workflow (chainable) methods:
 * `read(string|array $path): self` – Load schema data from cache/directory/php/json sources and merge.
 
 State helpers:
-* `get(): ?Schema` – Current in-memory schema (or `null`).
+* `get(): ?Schema` – Current in-memory schema (or `null`). Does NOT perform I/O.
+* `load(): ?Schema` – Attempt to load from cache if not already loaded; returns the schema or `null`.
 * `setSchema(Schema $schema): self` – Replace current schema.
 * `reset(): self` – Clear schema & errors.
 * `getErrors(): string[]` – Retrieve & clear collected errors.
@@ -181,37 +187,71 @@ Flags:
 
 ## Automation
 
-`$automate` is evaluated when calling `get()` if no schema exists yet:
-* `draft`: run all draft handlers (or configured subset) to build schema
-* `archive`: persist after drafting
-* `read`: attempt to read before drafting
+`$automate` can be used (if enabled) to mimic legacy behavior (auto draft/read/archive). In the minimal core you are encouraged to call the methods you need explicitly. The provided `load()` method offers a lightweight manual cache check pattern. Disable flags you do not want executed implicitly.
 
-Disable any flag for explicit control in performance‑critical flows.
+Recommended explicit flow:
 
-## Structure
+```php
+$schemas = service('schemas');
+if (! $schemas->load()) {            // null => nothing in cache
+    $schemas->draft()->archive();    // build & store
+}
+$schema = $schemas->get();           // schema now present
+```
 
-Schemas uses foreign keys, indexes, and naming convention to detect relationships
-automatically. Make sure your database is setup using the appropriate keys and
-foreign keys to assist with the detection. Naming conventions follow the format of
-`{table}_id` for foreign keys and `{table1}_{table2}` for pivot tables. For more examples
-on relationship naming conventions consult the Rails Guide
-...(Rails reference omitted for brevity)...
+## Relationships, Foreign Keys & Lazy Tables
 
-### Intervention
+Drafting from the database collects tables, fields, indexes and foreign keys. Relationships are inferred (when `$relationships = true`) using:
 
-Should autodetection fail or should you need to deviate from conventions there are a few
-tools you can use to overwrite or augment the generated schema.
+* Real foreign keys (preferred)
+* Pivot table heuristics: table with only two foreign key columns referencing distinct tables → many-to-many
+* Column naming pattern: `{other_table}_id` → belongsTo/hasMany guess (fallback)
 
-* **Config/Schemas**: the Config file includes a variable for `$ignoredTables` that will let you skip tables entirely. By default this includes the framework's `migrations` table.
-* **app/Schemas/{file}.php**: The `DirectoryHandler` will load any schemas detected in your **Schemas** directory - this gives you a chance to specify anything you want. See [tests/_support/Schemas/Good/Products.php](tests/_support/Schemas/Good/Products.php) for an example.
+### Lazy Table Placeholders (Cache)
+
+When archiving to cache, the `CacheHandler` stores a scaffold: each table slot becomes `tableName => true` and the full `Table` object is saved under a separate cache key. This minimizes the size of the main schema entry and defers hydration.
+
+How to materialize:
+
+```php
+$schemas->load();              // scaffold only (tables => true)
+$schema = $schemas->get();
+
+// Access one table (lazy load via reader magic)
+$users = $schema->tables->users; // now users is a Table object
+
+// Or fetch all tables eagerly if reader supports it
+if (is_object($schema->tables) && method_exists($schema->tables, 'fetchAll')) {
+    $schema->tables->fetchAll();
+}
+```
+
+### Foreign Keys of a Table
+
+```php
+$posts = $schema->tables->posts;         // lazy hydrate
+foreach ($posts->foreignKeys as $name => $fk) {
+    echo $fk->column_name, ' -> ', $fk->foreign_table_name, '.', $fk->foreign_column_name, PHP_EOL;
+}
+```
+
+If a table still shows as `true`, call:
+```php
+$schema->tables->fetch('posts');
+```
+
+### Intervention / Manual Adjustments
+
+* **Config/Schemas**: Use `$ignoredTables` to skip noisy tables.
+* **app/Schemas/*.php**: Provide overrides or custom additions (DirectoryHandler). Example: [tests/_support/Schemas/Good/Products.php](tests/_support/Schemas/Good/Products.php).
 
 ## Supported Draft / Archive / Read
 
-Draft: database, model, directory (PHP files)
+Draft: `database`, `model`, `directory`
 
-Archive: cache
+Archive: `cache`
 
-Read: cache, directory, php, json
+Read: `cache`, `directory`, `php`, `json`
 
 ## Database Support
 

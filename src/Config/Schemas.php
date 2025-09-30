@@ -15,6 +15,7 @@ namespace Daycry\Schemas\Config;
 
 use CodeIgniter\Config\BaseConfig;
 use Daycry\Schemas\Archiver\Handlers\CacheHandler as CacheArchiveHandler;
+use Daycry\Schemas\Archiver\Handlers\JsonHandler as JsonArchiveHandler;
 use Daycry\Schemas\Drafter\Handlers\DatabaseHandler;
 use Daycry\Schemas\Drafter\Handlers\DirectoryHandler;
 use Daycry\Schemas\Drafter\Handlers\DirectoryHandlers\PhpHandler;
@@ -147,6 +148,7 @@ class Schemas extends BaseConfig
      */
     public array $archiveHandlers = [
         'cache' => CacheArchiveHandler::class,
+        'json'  => JsonArchiveHandler::class,
     ];
 
     /**
