@@ -19,12 +19,18 @@ use Daycry\Schemas\Schemas;
 
 class Services extends BaseService
 {
-    public static function schemas(?SchemasConfig $config = null, bool $getShared = true)
+    public static function schemas(?SchemasConfig $config = null, bool $getShared = true): Schemas
     {
         if ($getShared) {
+            /** @var Schemas */
             return static::getSharedInstance('schemas', $config);
         }
 
-        return new Schemas($config ?? config('Schemas'));
+        $cfg = $config ?? config('Schemas');
+        if (! $cfg instanceof SchemasConfig) {
+            $cfg = new SchemasConfig();
+        }
+
+        return new Schemas($cfg);
     }
 }

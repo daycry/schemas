@@ -22,22 +22,23 @@ use Daycry\Schemas\Structures\Field;
 use Daycry\Schemas\Structures\Schema;
 use Daycry\Schemas\Structures\Table;
 use Exception;
+use ReflectionClass;
 
-class ModelHandler extends BaseDrafter implements DrafterInterface
+/**
+ * Final model drafter handler.
+ * Derives schema information from CodeIgniter model metadata & properties.
+ */
+final class ModelHandler extends BaseDrafter implements DrafterInterface
 {
     /**
      * The default database group.
-     *
-     * @var string
      */
-    protected $defaultGroup;
+    protected string $defaultGroup;
 
     /**
      * The database group to constrain by.
-     *
-     * @var string
      */
-    protected $group;
+    protected ?string $group = null;
 
     /**
      * Save the config and set the initial database group
@@ -68,11 +69,11 @@ class ModelHandler extends BaseDrafter implements DrafterInterface
      *
      * @param string $group A database group to use as a filter; false = no filtering
      */
-    public function setGroup(string $group)
+    public function setGroup(string $group): static
     {
         $this->group = $group;
 
-        return $group;
+        return $this;
     }
 
     /**
@@ -96,39 +97,56 @@ class ModelHandler extends BaseDrafter implements DrafterInterface
         foreach ($this->getModels() as $class) {
             $instance = new $class();
 
-            // Start a new table
-            /** @var object $table */
-            $table             = new Table($instance->table);
-            $table->model      = $class;
-            $table->returnType = $instance->returnType;
+            // Safely read properties using reflection to avoid protected access issues
+            $ref      = new ReflectionClass($instance);
+            $readProp = static function (object $obj, ReflectionClass $ref, string $prop): mixed {
+                if ($ref->hasProperty($prop)) {
+                    $p = $ref->getProperty($prop);
+                    $p->setAccessible(true);
 
-            // Create a field for the primary key
-            $field                         = new Field($instance->primaryKey);
+                    return $p->getValue($obj);
+                }
+
+                return null;
+            };
+
+            $tableName = (string) ($readProp($instance, $ref, 'table') ?? '');
+            if ($tableName === '') {
+                continue; // skip models without table name
+            }
+            $returnType     = (string) ($readProp($instance, $ref, 'returnType') ?? 'array');
+            $primaryKey     = (string) ($readProp($instance, $ref, 'primaryKey') ?? 'id');
+            $allowed        = $readProp($instance, $ref, 'allowedFields');
+            $useTimestamps  = (bool) ($readProp($instance, $ref, 'useTimestamps') ?? false);
+            $useSoftDeletes = (bool) ($readProp($instance, $ref, 'useSoftDeletes') ?? false);
+            $createdField   = (string) ($readProp($instance, $ref, 'createdField') ?? 'created_at');
+            $updatedField   = (string) ($readProp($instance, $ref, 'updatedField') ?? 'updated_at');
+            $deletedField   = (string) ($readProp($instance, $ref, 'deletedField') ?? 'deleted_at');
+            $dateFormat     = (string) ($readProp($instance, $ref, 'dateFormat') ?? 'datetime');
+
+            $table             = new Table($tableName);
+            $table->model      = $class;
+            $table->returnType = $returnType;
+
+            $field                         = new Field($primaryKey);
             $field->primary_key            = true;
             $table->fields->{$field->name} = $field;
 
-            // Create a field for each allowed field
-            foreach ($instance->allowedFields as $fieldName) {
+            if (is_array($allowed)) {
+                foreach ($allowed as $fieldName) {
+                    $field                       = new Field($fieldName);
+                    $table->fields->{$fieldName} = $field;
+                }
+            }
+
+            $timestamps = $useTimestamps ? ['createdField' => $createdField, 'updatedField' => $updatedField] : [];
+            if ($useSoftDeletes) {
+                $timestamps['deletedField'] = $deletedField;
+            }
+
+            foreach ($timestamps as $fieldName) {
                 $field                       = new Field($fieldName);
-                $table->fields->{$fieldName} = $field;
-            }
-
-            // Figure out which timestamp fields (if any) this model uses and add them
-            $timestamps = $instance->useTimestamps ? [
-                'createdField',
-                'updatedField',
-            ] : [];
-            if ($instance->useSoftDeletes) {
-                $timestamps[] = 'deletedField';
-            }
-
-            // Get field names from each timestamp attribute
-            foreach ($timestamps as $attribute) {
-                $fieldName = $instance->{$attribute};
-                /** @var object $field */
-                $field       = new Field($fieldName);
-                $field->type = $instance->dateFormat;
-
+                $field->type                 = $dateFormat;
                 $table->fields->{$fieldName} = $field;
             }
 
@@ -143,11 +161,25 @@ class ModelHandler extends BaseDrafter implements DrafterInterface
      *
      * @return array of model class names
      */
+    /**
+     * @return array<int, class-string<Model>>
+     */
     protected function getModels(): array
     {
-        $loader  = Services::autoloader();
-        $locator = Services::locator();
-        $models  = [];
+        $loader   = Services::autoloader();
+        $locator  = Services::locator();
+        $models   = [];
+        $readProp = static function (object $obj, string $prop): mixed {
+            $ref = new ReflectionClass($obj);
+            if ($ref->hasProperty($prop)) {
+                $p = $ref->getProperty($prop);
+                $p->setAccessible(true);
+
+                return $p->getValue($obj);
+            }
+
+            return null;
+        };
 
         // Get each namespace
         foreach ($loader->getNamespace() as $namespace => $path) {
@@ -166,10 +198,14 @@ class ModelHandler extends BaseDrafter implements DrafterInterface
         }
 
         // Filter loaded class on likely models
-        $classes = preg_grep('/model$/i', get_declared_classes());
+        $classes = preg_grep('/model$/i', get_declared_classes()) ?: [];
 
         // Try to load each class
         foreach ($classes as $class) {
+            if (! is_string($class)) {
+                continue;
+            }
+
             // Check for ignored namespaces
             foreach ($this->config->ignoredNamespaces as $namespace) {
                 if (str_starts_with($class, $namespace)) {
@@ -190,7 +226,8 @@ class ModelHandler extends BaseDrafter implements DrafterInterface
             }
 
             // Make sure it has a valid table
-            $table = $instance->table;
+            // Access model table name (public in CI4 models; guard in case of extension changes)
+            $table = (string) ($readProp($instance, 'table') ?? '');
             if (empty($table)) {
                 continue;
             }
@@ -198,7 +235,7 @@ class ModelHandler extends BaseDrafter implements DrafterInterface
             // Filter by group
             $group = $instance->DBGroup ?? $this->defaultGroup; // @phpstan-ignore-line
             if (empty($this->group) || $group === $this->group) {
-                $models[] = $class;
+                $models[] = $class; // class-string<Model>
             }
             unset($instance);
         }

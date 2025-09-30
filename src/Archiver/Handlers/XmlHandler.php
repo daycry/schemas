@@ -13,16 +13,25 @@ declare(strict_types=1);
 
 namespace Daycry\Schemas\Archiver\Handlers;
 
-use Daycry\Schemas\Archiver\BaseArchiver;
 use Daycry\Schemas\Archiver\ArchiverInterface;
+use Daycry\Schemas\Archiver\BaseArchiver;
 use Daycry\Schemas\Config\Schemas as SchemasConfig;
+use Daycry\Schemas\Structures\Field;
+use Daycry\Schemas\Structures\Field as StructureField;
+use Daycry\Schemas\Structures\ForeignKey;
+use Daycry\Schemas\Structures\ForeignKey as StructureForeignKey;
+use Daycry\Schemas\Structures\Index;
+use Daycry\Schemas\Structures\Index as StructureIndex;
 use Daycry\Schemas\Structures\Schema;
+use Daycry\Schemas\Structures\Table;
+use Daycry\Schemas\Structures\Table as StructureTable;
 use DOMDocument;
 use DOMElement;
+use Exception;
 
 /**
  * XML Archiver Handler
- * 
+ *
  * Archives schemas to XML format compatible with Doctrine DBAL
  */
 class XmlHandler extends BaseArchiver implements ArchiverInterface
@@ -43,40 +52,32 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
 
     /**
      * Constructor
-     *
-     * @param SchemasConfig $config
-     * @param string        $filePath
-     * @param bool          $formatOutput
      */
     public function __construct(?SchemasConfig $config = null, string $filePath = 'schema.xml', bool $formatOutput = true)
     {
         parent::__construct($config);
-        
-        $this->filePath = $filePath;
+
+        $this->filePath     = $filePath;
         $this->formatOutput = $formatOutput;
     }
 
     /**
      * Archive schema to XML format
-     *
-     * @param Schema $schema
-     *
-     * @return bool
      */
     public function archive(Schema $schema): bool
     {
         try {
             $xml = $this->convertSchemaToXml($schema);
-            
+
             $directory = dirname($this->filePath);
-            if (!is_dir($directory)) {
+            if (! is_dir($directory)) {
                 mkdir($directory, 0755, true);
             }
-            
+
             return $xml->save($this->filePath) !== false;
-            
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->errors[] = 'XML archive failed: ' . $e->getMessage();
+
             return false;
         }
     }
@@ -86,7 +87,7 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
      */
     protected function convertSchemaToXml(Schema $schema): DOMDocument
     {
-        $xml = new DOMDocument('1.0', 'UTF-8');
+        $xml               = new DOMDocument('1.0', 'UTF-8');
         $xml->formatOutput = $this->formatOutput;
 
         // Create root element
@@ -95,10 +96,8 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
         $database->setAttribute('exported_at', date('c'));
         $xml->appendChild($database);
 
-        if ($schema->tables) {
-            foreach ($schema->tables as $table) {
-                $this->addTableToXml($xml, $database, $table);
-            }
+        foreach ($schema->tables as $table) {
+            $this->addTableToXml($xml, $database, $table);
         }
 
         return $xml;
@@ -107,11 +106,11 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
     /**
      * Add table to XML document
      */
-    protected function addTableToXml(DOMDocument $xml, DOMElement $parent, $table): void
+    protected function addTableToXml(DOMDocument $xml, DOMElement $parent, StructureTable $table): void
     {
         $tableElement = $xml->createElement('table');
         $tableElement->setAttribute('name', $table->name);
-        
+
         if ($table->comment) {
             $tableElement->setAttribute('comment', $table->comment);
         }
@@ -123,24 +122,18 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
         }
 
         // Add fields
-        if ($table->fields) {
-            foreach ($table->fields as $field) {
-                $this->addFieldToXml($xml, $tableElement, $field);
-            }
+        foreach ($table->fields as $field) {
+            $this->addFieldToXml($xml, $tableElement, $field);
         }
 
         // Add indexes
-        if ($table->indexes) {
-            foreach ($table->indexes as $index) {
-                $this->addIndexToXml($xml, $tableElement, $index);
-            }
+        foreach ($table->indexes as $index) {
+            $this->addIndexToXml($xml, $tableElement, $index);
         }
 
         // Add foreign keys
-        if ($table->foreignKeys) {
-            foreach ($table->foreignKeys as $foreignKey) {
-                $this->addForeignKeyToXml($xml, $tableElement, $foreignKey);
-            }
+        foreach ($table->foreignKeys as $foreignKey) {
+            $this->addForeignKeyToXml($xml, $tableElement, $foreignKey);
         }
 
         $parent->appendChild($tableElement);
@@ -149,26 +142,26 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
     /**
      * Add field to XML table element
      */
-    protected function addFieldToXml(DOMDocument $xml, DOMElement $table, $field): void
+    protected function addFieldToXml(DOMDocument $xml, DOMElement $table, StructureField $field): void
     {
         $column = $xml->createElement('column');
         $column->setAttribute('name', $field->name);
         $column->setAttribute('type', $field->type);
-        
+
         if ($field->max_length !== null) {
             $column->setAttribute('length', (string) $field->max_length);
         }
-        
+
         $column->setAttribute('notnull', $field->nullable ? 'false' : 'true');
-        
+
         if ($field->default !== null) {
             $column->setAttribute('default', $field->default);
         }
-        
+
         if ($field->auto_increment) {
             $column->setAttribute('autoincrement', 'true');
         }
-        
+
         if ($field->comment) {
             $column->setAttribute('comment', $field->comment);
         }
@@ -179,7 +172,7 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
     /**
      * Add index to XML table element
      */
-    protected function addIndexToXml(DOMDocument $xml, DOMElement $table, $index): void
+    protected function addIndexToXml(DOMDocument $xml, DOMElement $table, StructureIndex $index): void
     {
         if ($index->type === 'PRIMARY') {
             // Primary key
@@ -196,11 +189,11 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
             // Regular index
             $indexElement = $xml->createElement('index');
             $indexElement->setAttribute('name', $index->name);
-            
+
             if ($index->unique) {
                 $indexElement->setAttribute('unique', 'true');
             }
-            
+
             if (is_array($index->fields)) {
                 foreach ($index->fields as $field) {
                     $column = $xml->createElement('column');
@@ -208,7 +201,7 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
                     $indexElement->appendChild($column);
                 }
             }
-            
+
             $table->appendChild($indexElement);
         }
     }
@@ -216,20 +209,20 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
     /**
      * Add foreign key to XML table element
      */
-    protected function addForeignKeyToXml(DOMDocument $xml, DOMElement $table, $foreignKey): void
+    protected function addForeignKeyToXml(DOMDocument $xml, DOMElement $table, StructureForeignKey $foreignKey): void
     {
         $fk = $xml->createElement('foreign-key');
-        
+
         if ($foreignKey->constraint_name) {
             $fk->setAttribute('name', $foreignKey->constraint_name);
         }
-        
+
         $fk->setAttribute('foreignTable', $foreignKey->foreign_table_name);
-        
+
         if ($foreignKey->on_delete) {
             $fk->setAttribute('onDelete', strtoupper($foreignKey->on_delete));
         }
-        
+
         if ($foreignKey->on_update) {
             $fk->setAttribute('onUpdate', strtoupper($foreignKey->on_update));
         }
@@ -248,23 +241,25 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
      */
     public function load(): ?Schema
     {
-        if (!file_exists($this->filePath)) {
+        if (! file_exists($this->filePath)) {
             $this->errors[] = "XML file not found: {$this->filePath}";
+
             return null;
         }
 
         try {
             $xml = new DOMDocument();
-            
-            if (!$xml->load($this->filePath)) {
+
+            if (! $xml->load($this->filePath)) {
                 $this->errors[] = "Failed to parse XML file: {$this->filePath}";
+
                 return null;
             }
-            
+
             return $this->convertXmlToSchema($xml);
-            
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->errors[] = 'XML load failed: ' . $e->getMessage();
+
             return null;
         }
     }
@@ -275,18 +270,18 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
     protected function convertXmlToSchema(DOMDocument $xml): Schema
     {
         $schema = new Schema();
-        
+
         $tables = $xml->getElementsByTagName('table');
-        
+
         foreach ($tables as $tableNode) {
             // Ensure we have a DOMElement
-            if (!($tableNode instanceof DOMElement)) {
+            if (! ($tableNode instanceof DOMElement)) {
                 continue;
             }
-            
+
             $tableElement = $tableNode;
-            $table = new \Daycry\Schemas\Structures\Table($tableElement->getAttribute('name'));
-            
+            $table        = new Table($tableElement->getAttribute('name'));
+
             if ($tableElement->hasAttribute('comment')) {
                 $table->comment = $tableElement->getAttribute('comment');
             }
@@ -299,108 +294,114 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
 
             // Load columns
             $columns = $tableElement->getElementsByTagName('column');
+
             foreach ($columns as $columnNode) {
-                if (!($columnNode instanceof DOMElement)) {
+                if (! ($columnNode instanceof DOMElement)) {
                     continue;
                 }
                 $columnElement = $columnNode;
-                
-                $field = new \Daycry\Schemas\Structures\Field($columnElement->getAttribute('name'));
+
+                $field       = new Field($columnElement->getAttribute('name'));
                 $field->type = $columnElement->getAttribute('type');
-                
+
                 if ($columnElement->hasAttribute('length')) {
                     $field->max_length = (int) $columnElement->getAttribute('length');
                 }
-                
+
                 $field->nullable = $columnElement->getAttribute('notnull') !== 'true';
-                
+
                 if ($columnElement->hasAttribute('default')) {
                     $field->default = $columnElement->getAttribute('default');
                 }
-                
+
                 if ($columnElement->hasAttribute('autoincrement')) {
                     $field->auto_increment = $columnElement->getAttribute('autoincrement') === 'true';
                 }
-                
+
                 if ($columnElement->hasAttribute('comment')) {
                     $field->comment = $columnElement->getAttribute('comment');
                 }
-                
+
                 $table->fields->{$field->name} = $field;
             }
 
             // Load indexes
             $indexes = $tableElement->getElementsByTagName('index');
+
             foreach ($indexes as $indexNode) {
-                if (!($indexNode instanceof DOMElement)) {
+                if (! ($indexNode instanceof DOMElement)) {
                     continue;
                 }
                 $indexElement = $indexNode;
-                
-                $index = new \Daycry\Schemas\Structures\Index($indexElement->getAttribute('name'));
+
+                $index         = new Index($indexElement->getAttribute('name'));
                 $index->unique = $indexElement->getAttribute('unique') === 'true';
-                
+
                 $indexColumns = $indexElement->getElementsByTagName('column');
+
                 foreach ($indexColumns as $indexColumnNode) {
-                    if (!($indexColumnNode instanceof DOMElement)) {
+                    if (! ($indexColumnNode instanceof DOMElement)) {
                         continue;
                     }
-                    $indexColumn = $indexColumnNode;
+                    $indexColumn     = $indexColumnNode;
                     $index->fields[] = $indexColumn->getAttribute('name');
                 }
-                
+
                 $table->indexes->{$index->name} = $index;
             }
 
             // Load primary keys
             $primaryKeys = $tableElement->getElementsByTagName('primary-key');
+
             foreach ($primaryKeys as $pkNode) {
-                if (!($pkNode instanceof DOMElement)) {
+                if (! ($pkNode instanceof DOMElement)) {
                     continue;
                 }
                 $pkElement = $pkNode;
-                
-                $index = new \Daycry\Schemas\Structures\Index('PRIMARY');
+
+                $index       = new Index('PRIMARY');
                 $index->type = 'PRIMARY';
-                
+
                 $pkColumns = $pkElement->getElementsByTagName('column');
+
                 foreach ($pkColumns as $pkColumnNode) {
-                    if (!($pkColumnNode instanceof DOMElement)) {
+                    if (! ($pkColumnNode instanceof DOMElement)) {
                         continue;
                     }
-                    $pkColumn = $pkColumnNode;
+                    $pkColumn        = $pkColumnNode;
                     $index->fields[] = $pkColumn->getAttribute('name');
-                    
+
                     // Mark field as primary key
                     $fieldName = $pkColumn->getAttribute('name');
                     if (property_exists($table->fields, $fieldName)) {
                         $table->fields->{$fieldName}->primary_key = true;
                     }
                 }
-                
+
                 $table->indexes->PRIMARY = $index;
             }
 
             // Load foreign keys
             $foreignKeys = $tableElement->getElementsByTagName('foreign-key');
+
             foreach ($foreignKeys as $fkNode) {
-                if (!($fkNode instanceof DOMElement)) {
+                if (! ($fkNode instanceof DOMElement)) {
                     continue;
                 }
                 $fkElement = $fkNode;
-                
-                $foreignKey = new \Daycry\Schemas\Structures\ForeignKey();
-                
+
+                $foreignKey = new ForeignKey();
+
                 if ($fkElement->hasAttribute('name')) {
                     $foreignKey->constraint_name = $fkElement->getAttribute('name');
                 }
-                
+
                 $foreignKey->foreign_table_name = $fkElement->getAttribute('foreignTable');
-                
+
                 if ($fkElement->hasAttribute('onDelete')) {
                     $foreignKey->on_delete = strtolower($fkElement->getAttribute('onDelete'));
                 }
-                
+
                 if ($fkElement->hasAttribute('onUpdate')) {
                     $foreignKey->on_update = strtolower($fkElement->getAttribute('onUpdate'));
                 }
@@ -409,13 +410,13 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
                 if ($references->length > 0) {
                     $referenceNode = $references->item(0);
                     if ($referenceNode instanceof DOMElement) {
-                        $reference = $referenceNode;
-                        $foreignKey->column_name = $reference->getAttribute('local');
+                        $reference                       = $referenceNode;
+                        $foreignKey->column_name         = $reference->getAttribute('local');
                         $foreignKey->foreign_column_name = $reference->getAttribute('foreign');
                     }
                 }
-                
-                $fkName = $foreignKey->constraint_name ?: 'fk_' . $foreignKey->column_name;
+
+                $fkName                        = $foreignKey->constraint_name ?: 'fk_' . $foreignKey->column_name;
                 $table->foreignKeys->{$fkName} = $foreignKey;
             }
 
@@ -430,8 +431,10 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
      */
     public function export(Schema $schema): string
     {
-        $xml = $this->convertSchemaToXml($schema);
-        return $xml->saveXML();
+        $xml    = $this->convertSchemaToXml($schema);
+        $result = $xml->saveXML();
+
+        return $result === false ? '' : $result;
     }
 
     /**
@@ -441,16 +444,17 @@ class XmlHandler extends BaseArchiver implements ArchiverInterface
     {
         try {
             $xml = new DOMDocument();
-            
-            if (!$xml->loadXML($xmlString)) {
-                $this->errors[] = "Failed to parse XML string";
+
+            if (! $xml->loadXML($xmlString)) {
+                $this->errors[] = 'Failed to parse XML string';
+
                 return null;
             }
-            
+
             return $this->convertXmlToSchema($xml);
-            
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->errors[] = 'XML import failed: ' . $e->getMessage();
+
             return null;
         }
     }

@@ -46,8 +46,13 @@ class ConfigPublish extends BaseCommand
 
         // If publication succeeded then update namespaces
         foreach ($publisher->getPublished() as $file) {
-            // Replace the namespace
             $contents = file_get_contents($file);
+            if ($contents === false) {
+                // Skip unreadable file but continue publishing others
+                CLI::write("Skipped unreadable file: {$file}", 'yellow');
+
+                continue;
+            }
             $contents = str_replace('namespace Daycry\\Schemas', 'namespace Config', $contents);
             $contents = str_replace('extends BaseConfig', 'extends \\Daycry\\Schemas\\Config\\Schemas', $contents);
             file_put_contents($file, $contents);
@@ -59,7 +64,7 @@ class ConfigPublish extends BaseCommand
     protected function write(
         string $text = '',
         ?string $foreground = null,
-        ?string $background = null
+        ?string $background = null,
     ): void {
         CLI::write($text, $foreground, $background);
     }

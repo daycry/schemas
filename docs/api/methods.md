@@ -1,6 +1,6 @@
-# API Reference - Methods
+# API Reference – Minimal Methods
 
-This document provides detailed information about all public methods available in the Daycry Schemas library.
+This trimmed list covers only methods relevant to the minimal core. Anything about: version metadata setters, statistics, advanced relation detection toggles, cache tags/versioning, compression, factories, chains, validation, performance, logging, async – has been removed from both code and documentation.
 
 ## Core Methods
 
@@ -136,41 +136,8 @@ public function getTable(string $name): ?Table
 public function getTableNames(): array
 ```
 
-#### Schema Metadata
-
-```php
-/**
- * Set schema version
- *
- * @param string $version Version string
- * @return self For method chaining
- */
-public function setVersion(string $version): self
-
-/**
- * Get schema version
- *
- * @return string|null Current version
- */
-public function getVersion(): ?string
-
-/**
- * Set metadata for the schema
- *
- * @param array $metadata Metadata array
- * @return self For method chaining
- */
-public function setMetadata(array $metadata): self
-
-/**
- * Add metadata item
- *
- * @param string $key Metadata key
- * @param mixed $value Metadata value
- * @return self For method chaining
- */
-public function addMetadata(string $key, mixed $value): self
-```
+#### (Removed Metadata / Versioning)
+Versioning & arbitrary metadata setters were dropped. A schema instance is a structural snapshot only.
 
 ### Table Class
 
@@ -322,52 +289,12 @@ public function getForeignKey(string $name): ?ForeignKey
 public function getForeignKeysByTable(string $table): array
 ```
 
-#### Relation Management
-
-```php
-/**
- * Add a relation to the table
- *
- * @param Relation $relation The relation to add
- * @return self For method chaining
- */
-public function addRelation(Relation $relation): self
-
-/**
- * Remove a relation from the table
- *
- * @param string $type Relation type
- * @param string $table Related table
- * @return self For method chaining
- */
-public function removeRelation(string $type, string $table): self
-
-/**
- * Get relations by type
- *
- * @param string $type Relation type
- * @return array Array of matching relations
- */
-public function getRelationsByType(string $type): array
-
-/**
- * Get all outgoing relations
- *
- * @return array Array of outgoing relations
- */
-public function getOutgoingRelations(): array
-
-/**
- * Get all incoming relations
- *
- * @return array Array of incoming relations
- */
-public function getIncomingRelations(): array
-```
+#### Relation Access
+Relations (if inferred) are stored on tables; only read the relation collection directly (no add/remove mutators in minimal core docs).
 
 ### Field Class
 
-#### Type and Properties
+#### Type & Basic Properties
 
 ```php
 /**
@@ -497,33 +424,7 @@ public function isBinary(): bool
 public function isIndexable(): bool
 ```
 
-#### SQL Generation
-
-```php
-/**
- * Get SQL definition for the field
- *
- * @param string $database Database type
- * @return string SQL definition
- */
-public function getDefinition(string $database = 'mysql'): string
-
-/**
- * Get CREATE TABLE column definition
- *
- * @param string $database Database type
- * @return string Column definition
- */
-public function getColumnDefinition(string $database = 'mysql'): string
-
-/**
- * Get ALTER TABLE definition for adding field
- *
- * @param string $database Database type
- * @return string ALTER definition
- */
-public function getAlterDefinition(string $database = 'mysql'): string
-```
+(Removed) SQL generation helpers were part of a higher-level migration/diff feature set and are no longer documented.
 
 ### Index Class
 
@@ -573,7 +474,7 @@ public function getFieldPosition(string $field): ?int
 public function setFieldLength(string $field, int $length): self
 ```
 
-#### Index Properties
+#### Index Properties (Core Subset)
 
 ```php
 /**
@@ -702,31 +603,7 @@ public function setOnDelete(string $action): self
 public function setOnUpdate(string $action): self
 ```
 
-#### Validation
-
-```php
-/**
- * Validate foreign key configuration
- *
- * @return bool True if valid
- */
-public function isValid(): bool
-
-/**
- * Get validation errors
- *
- * @return array Array of error messages
- */
-public function getValidationErrors(): array
-
-/**
- * Check if foreign key is self-referencing
- *
- * @param string $currentTable Current table name
- * @return bool True if self-referencing
- */
-public function isSelfReferencing(string $currentTable): bool
-```
+Validation helper methods were removed (schema objects are trusted structural descriptions). Self-referencing detection logic not exposed as public helpers anymore.
 
 ## Reader Methods
 
@@ -770,42 +647,10 @@ public function getTables(): ?Structures\Mergeable
 public function count(): int
 ```
 
-### CacheHandler (Reader)
+### Cache Reader / Archiver Notes
+Cache prefix/statistics/invalidation & TTL adjustments beyond initial config were removed. Cache usage is now: archive once, later read.
 
-```php
-/**
- * Set cache key prefix
- *
- * @param string $prefix Cache key prefix
- * @return self For method chaining
- */
-public function setCachePrefix(string $prefix): self
-
-/**
- * Check if cache is valid
- *
- * @return bool True if cache is valid
- */
-public function isCacheValid(): bool
-
-/**
- * Invalidate cache
- *
- * @return bool True if successful
- */
-public function invalidateCache(): bool
-
-/**
- * Get cache statistics
- *
- * @return array Cache statistics
- */
-public function getCacheStats(): array
-```
-
-## Drafter Methods
-
-### DatabaseHandler (Drafter)
+## Drafter Methods (DatabaseHandler)
 
 ```php
 /**
@@ -824,106 +669,15 @@ public function setTableFilter(array $tables): self
  */
 public function setIgnorePrefix(string $prefix): self
 
-/**
- * Enable/disable relation detection
- *
- * @param bool $enabled True to enable
- * @return self For method chaining
- */
-public function setRelationDetection(bool $enabled): self
+Relation detection tuning, db info, and table statistics interfaces were removed; the drafter just drafts.
 
-/**
- * Get database information
- *
- * @return array Database information
- */
-public function getDatabaseInfo(): array
-
-/**
- * Get table statistics
- *
- * @param string $table Table name
- * @return array Table statistics
- */
-public function getTableStats(string $table): array
-```
-
-## Archiver Methods
-
-### CacheArchiver
-
-```php
-/**
- * Set cache TTL
- *
- * @param int $ttl Time to live in seconds
- * @return self For method chaining
- */
-public function setTtl(int $ttl): self
-
-/**
- * Set cache tags
- *
- * @param array $tags Cache tags
- * @return self For method chaining
- */
-public function setTags(array $tags): self
-
-/**
- * Retrieve archived schema
- *
- * @return Structures\Schema|null Retrieved schema
- */
-public function retrieve(): ?Structures\Schema
-
-/**
- * Check if archived schema exists
- *
- * @return bool True if exists
- */
-public function exists(): bool
-
-/**
- * Get archive timestamp
- *
- * @return int|null Archive timestamp
- */
-public function getTimestamp(): ?int
-```
+## Archiver Methods (Cache / Json / Xml)
+Public surface is effectively: `archive(Structures\Schema $schema): bool` and `retrieve(): ?Structures\Schema`.
 
 ## Utility Methods
 
 ### BaseHandler
-
-```php
-/**
- * Get error messages
- *
- * @return array Array of error messages
- */
-public function getErrors(): array
-
-/**
- * Clear all errors
- *
- * @return self For method chaining
- */
-public function clearErrors(): self
-
-/**
- * Check if handler has errors
- *
- * @return bool True if has errors
- */
-public function hasErrors(): bool
-
-/**
- * Get last error message
- *
- * @return string|null Last error or null
- */
-public function getLastError(): ?string
-```
+Explicit error collection helpers were internalized; consumers should rely on exceptions (unless `silent` suppresses). No public error API documented.
 
 ### Mergeable
 
@@ -968,4 +722,4 @@ public static function fromArray(array $data): static
 public static function fromJson(string $json): static
 ```
 
-This comprehensive methods reference provides detailed information about all public methods available in the Daycry Schemas library, including their parameters, return types, and usage examples.
+This minimal list reflects the current supported public surface. Anything else you find in source is internal and may change without notice.

@@ -121,238 +121,99 @@ public string $defaultGroup = 'default';
 ```php
 public array $ignoredTables = [];
 ```
-- **Description**: Tables to exclude from schema operations
-- **Default**: `[]` (empty array)
-- **Example**: `['migrations', 'cache', 'sessions']`
+# API Reference - Configuration (Minimal Core)
 
-#### Included Tables
-```php
+This document describes only the configuration that still applies to the trimmed core. All legacy feature flags (validation, performance analysis, intelligent cache manager, advanced relation detection, logging metrics, versioning, advanced relationships, migration generation, encryption/compression toggles) have been removed from code and SHOULD NOT appear in your `Config\Schemas` class anymore.
+
+Minimal example `Config\Schemas.php`:
 public array $includedTables = [];
-```
-- **Description**: Specific tables to include (if set, only these tables will be processed)
-- **Default**: `[]` (empty array - includes all tables)
-- **Example**: `['users', 'posts', 'categories']`
 
-#### Table Prefix
-```php
-public string $tablePrefix = '';
-```
-- **Description**: Prefix to add/remove from table names
-- **Default**: `''` (empty string)
-- **Example**: `'app_'`, `'cms_'`
+Minimal example `Config\Schemas.php`:
+class Schemas extends BaseConfig
+{
+    public string $defaultGroup = 'default';
+    public array  $ignoredTables = [];
+    public string $tablePrefix   = '';
 
-### Core Settings
+    // Silent mode: collect errors instead of throwing
+    public bool $silent = false;
 
-#### Silent Mode
-```php
-public bool $silent = false;
-```
-- **Description**: Suppress error output and exceptions
-- **Default**: `false`
-- **Values**: `true` (silent), `false` (verbose)
-
-#### Enable Validation
-```php
-public bool $enableValidation = false;
-```
-- **Description**: Enable schema validation features
-- **Default**: `false`
-- **Impact**: Enables `SchemaValidator` functionality
-
-#### Enable Performance Analysis
-```php
-public bool $enablePerformanceAnalysis = false;
-```
-- **Description**: Enable performance analysis features
-- **Default**: `false`
-- **Impact**: Enables `PerformanceAnalyzer` functionality
-
-#### Enable Intelligent Cache
-```php
-public bool $enableIntelligentCache = false;
-```
-- **Description**: Enable advanced caching with versioning and tags
-- **Default**: `false`
-- **Impact**: Enables `IntelligentCacheManager` functionality
-
-#### Enable Relation Detection
-```php
-public bool $enableRelationDetection = true;
-```
-- **Description**: Enable automatic relationship detection
-- **Default**: `true`
-- **Impact**: Enables `AdvancedRelationDetector` functionality
-
-### Cache Configuration
-
-```php
-public array $cache = [
-    'enabled' => false,              // Enable caching
-    'handler' => 'file',             // Cache handler (file, redis, memcached)
-    'ttl' => 3600,                  // Time to live in seconds
-    'prefix' => 'schemas_',         // Cache key prefix
-    'tags' => ['schemas'],          // Cache tags for invalidation
-    'versioning' => false,          // Enable cache versioning
-    'compression' => false          // Enable cache compression
-];
-```
-
-#### Cache Handler Options
-- `'file'`: File-based caching
-- `'redis'`: Redis caching
-- `'memcached'`: Memcached caching
-- `'database'`: Database caching
-- `'array'`: In-memory caching (for testing)
-
-#### Cache TTL Examples
-- `3600`: 1 hour
-- `86400`: 24 hours
-- `604800`: 1 week
-- `0`: No expiration
-
-### Logging Configuration
-
-```php
-public array $logging = [
-    'enabled' => false,                 // Enable logging
-    'level' => 'info',                 // Log level
-    'channels' => ['file'],            // Log channels
-    'performance_metrics' => true,     // Log performance metrics
+    // Basic cache settings (used by CacheArchiver / CacheHandler if present)
+    public array $cache = [
+        'enabled' => false,
+        'handler' => 'file', // or 'redis', 'memcached' depending on CI services
+        'ttl'     => 3600,
+        'prefix'  => 'schemas_',
+    ];
+}
     'query_logging' => false          // Log database queries
 ];
-```
 
-#### Log Levels
-- `'emergency'`: System is unusable
-- `'alert'`: Action must be taken immediately
+Legacy feature toggles (validation, performance, intelligent cache, relation detection) were removed; delete them from older configs.
 - `'critical'`: Critical conditions
+### Cache Configuration (Basic)
 - `'error'`: Error conditions
-- `'warning'`: Warning conditions
-- `'notice'`: Normal but significant condition
-- `'info'`: Informational messages
-- `'debug'`: Debug-level messages
-
-#### Log Channels
-- `'file'`: File logging
-- `'database'`: Database logging
-- `'email'`: Email notifications
+public array $cache = [
+    'enabled' => false,
+    'handler' => 'file',
+    'ttl'     => 3600,
+    'prefix'  => 'schemas_',
+];
 - `'slack'`: Slack notifications
-
-### Performance Analysis Settings
-
-```php
-public array $performance = [
+Supported handlers depend on CI4 cache configuration (e.g., file, redis, memcached). No tags, versioning, or compression layer in minimal core.
     'enabled' => false,                 // Enable performance analysis
     'analysis_depth' => 'full',        // Analysis depth
-    'score_weights' => [               // Scoring weights
-        'indexes' => 0.3,
-        'foreign_keys' => 0.2,
-        'data_types' => 0.2,
-        'table_structure' => 0.15,
-        'query_patterns' => 0.15
-    ],
-    'recommendations' => true,          // Generate recommendations
-    'auto_optimize' => false           // Auto-apply optimizations
-];
-```
-
-#### Analysis Depth Options
-- `'basic'`: Basic analysis (indexes and foreign keys)
-- `'standard'`: Standard analysis (includes data types)
-- `'full'`: Full analysis (all components)
-- `'custom'`: Custom analysis (specify components)
-
-#### Score Weights
-Each component's weight in the overall performance score (must sum to 1.0):
-- `indexes`: Index optimization score
-- `foreign_keys`: Foreign key performance score
-- `data_types`: Data type efficiency score
-- `table_structure`: Table structure score
+### Logging
+No built-in logging layer; wrap operations with your own PSR-3 logger if desired.
 - `query_patterns`: Query pattern analysis score
 
-### Relationship Detection Settings
-
-```php
-public array $relationships = [
-    'enabled' => true,                  // Enable relationship detection
-    'detect_polymorphic' => true,      // Detect polymorphic relationships
-    'detect_self_referencing' => true, // Detect self-referencing relationships
-    'detect_many_to_many' => true,     // Detect many-to-many relationships
-    'detect_hierarchical' => true,     // Detect hierarchical structures
-    'naming_conventions' => [          // Naming convention patterns
-        'foreign_key_suffix' => '_id',
-        'pivot_table_pattern' => '{table1}_{table2}',
-        'polymorphic_type_suffix' => '_type',
-        'polymorphic_id_suffix' => '_id'
+### Removed Advanced Settings
+Performance scoring, validation rule sets, advanced relation pattern detection, schema versioning, encryption/compression flags were removed.
     ]
-];
-```
-
-#### Naming Convention Patterns
-- `foreign_key_suffix`: Suffix for foreign key columns (e.g., `user_id`)
+Advanced sections intentionally omitted.
 - `pivot_table_pattern`: Pattern for pivot tables (e.g., `users_roles`)
 - `polymorphic_type_suffix`: Suffix for polymorphic type columns
 - `polymorphic_id_suffix`: Suffix for polymorphic ID columns
-
-### Validation Settings
-
+### Development Environment
+Disable cache for iterative schema changes:
 ```php
-public array $validation = [
-    'enabled' => false,                 // Enable validation
-    'strict_mode' => false,            // Enable strict validation
-    'rules' => [                       // Validation rules
-        'circular_references' => true,
-        'foreign_key_consistency' => true,
-        'data_type_validation' => true,
+public array $cache = ['enabled' => false];
+```
         'index_validation' => true,
         'constraint_validation' => true,
         'naming_conventions' => false
-    ],
-    'auto_fix' => false,               // Auto-fix issues
-    'custom_rules' => []               // Custom validation rules
-];
+### Production Environment
+```php
+public bool $silent = true; // collect non-critical errors silently
+public array $cache = [ 'enabled' => true, 'handler' => 'redis', 'ttl' => 86400 ];
 ```
-
-#### Validation Rules
-- `circular_references`: Detect circular foreign key references
-- `foreign_key_consistency`: Validate foreign key constraints
-- `data_type_validation`: Validate data type consistency
-- `index_validation`: Validate index effectiveness
-- `constraint_validation`: Validate table constraints
 - `naming_conventions`: Validate naming conventions
 
 #### Custom Rules Example
+### Testing Environment
 ```php
-'custom_rules' => [
-    'table_name_prefix' => function($table) {
-        return str_starts_with($table->name, 'app_');
-    },
-    'required_timestamps' => function($table) {
-        return $table->hasField('created_at') && $table->hasField('updated_at');
-    }
-]
+public array $cache = ['enabled' => false];
+public array $ignoredTables = ['migrations'];
+```
 ```
 
 ### Advanced Features
-
+### Custom Configuration
 ```php
-public array $advanced = [
-    'schema_versioning' => false,       // Enable schema versioning
-    'migration_support' => false,      // Enable migration generation
+$config = config('Schemas');
+$config->cache['enabled'] = true;
+$schemas = new \Daycry\Schemas\Schemas($config);
     'backup_schemas' => false,         // Auto-backup schemas
     'compression' => false,            // Compress stored schemas
-    'encryption' => false             // Encrypt stored schemas
-];
-```
-
+// Invalid configuration examples:
+$config->cache['ttl'] = -1;            // Invalid TTL
+$config->defaultGroup = 'nonexistent'; // Invalid DB group
 ## Environment-Specific Configuration
+2. **Cache Strategy**: Enable caching in production, disable in development for freshness.
+3. **Keep Lean**: Avoid re-adding removed flags unless you reintroduce corresponding code.
+4. **Security**: Treat archived schemas like metadata; handle according to your app's policies.
 
-### Development Environment
-```php
-// Config/Schemas.php (Development)
-public bool $enableValidation = true;
-public bool $enablePerformanceAnalysis = true;
-public array $logging = [
+This configuration reference reflects the currently supported minimal options.
     'enabled' => true,
     'level' => 'debug',
     'performance_metrics' => true,

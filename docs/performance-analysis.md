@@ -1,83 +1,20 @@
-# Performance and Code Quality Analysis Report
+# Performance Analysis (Removed)
 
-## 📊 Analysis Summary
+The standalone performance / quality analysis subsystem and its detailed report have been removed as part of the minimal core reduction. The library now focuses only on:
 
-### Static Analysis Results (PHPStan Level 5)
-- **Total Issues Found:** 248 errors
-- **Analysis Status:** Requires attention
-- **Major Categories:**
-  - Variable property access issues
-  - Type safety concerns
-  - PHPDoc inconsistencies
-  - Construct validation issues
+- Drafting (Database / Directory)
+- Archiving (simple cache / flat file formats)
+- Reading (cache / json / php / basic db object)
 
-### Test Coverage Results
-- **Total Tests:** 152 ✅
-- **Test Status:** All passing
-- **Assertions:** 449 ✅
-- **Coverage:** High coverage for new features
-- **Skipped Tests:** 5 (environment-specific)
+Any former references to: performance analyzer classes, metrics collection, optimization phases, statistical reporting, or automated audits are legacy and no longer applicable.
 
-## 🔍 Key Issues Identified
+Current lightweight guidance:
 
-### 1. Dynamic Property Access
-**Issue:** Extensive use of variable property access on Mergeable structures
-```php
-// Pattern found throughout codebase
-$schema->tables->$tableName // Variable property access
-```
-**Impact:** Type safety, IDE support, static analysis
-**Priority:** Medium
+1. Run your own static analysis (e.g. PHPStan/Psalm) in your project – the library itself ships clean.
+2. If you need runtime profiling, instrument your application code around drafting (which is typically done rarely, not per-request).
+3. Keep drafts cached – re-drafting repeatedly is the only significant cost left.
 
-### 2. Empty() Construct Usage
-**Issue:** Use of `empty()` construct instead of strict comparisons
-```php
-// Current pattern
-if (empty($value)) // Not recommended
-
-// Preferred pattern
-if ($value === null || $value === '' || $value === []) // Explicit
-```
-**Impact:** Type safety, predictable behavior
-**Priority:** Low
-
-### 3. Undefined Property Access
-**Issue:** Access to properties not defined in class structures
-**Examples:**
-- `Table::$comment`, `Table::$engine`, `Table::$collation`
-- `Field::$type`, `Field::$max_length`, `Field::$nullable`
-- `Index::$fields`, `Index::$type`, `Index::$unique`
-**Impact:** Runtime errors, maintainability
-**Priority:** High
-
-### 4. Boolean Type Issues
-**Issue:** Non-boolean values used in boolean contexts
-**Impact:** Logic errors, unexpected behavior
-**Priority:** Medium
-
-## 🎯 Optimization Recommendations
-
-### Phase 1: Critical Fixes (High Priority)
-1. **Property Definition Standardization**
-   - Define all accessed properties in structure classes
-   - Add proper type hints and PHPDoc
-   - Implement magic methods where appropriate
-
-2. **Type Safety Improvements**
-   - Replace variable property access with array access where possible
-   - Implement proper getter/setter methods
-   - Add type declarations to method parameters and returns
-
-### Phase 2: Code Quality (Medium Priority)
-1. **Boolean Logic Cleanup**
-   - Replace empty() with explicit checks
-   - Fix boolean type issues in conditions
-   - Standardize null checks
-
-2. **Static Analysis Compliance**
-   - Address PHPStan level 5 issues
-   - Improve PHPDoc accuracy
-   - Fix type inconsistencies
+If you find references to performance tuning flags or analyzer classes elsewhere in the docs, please open an issue so they can be removed.
 
 ### Phase 3: Enhanced Features (Low Priority)
 1. **Performance Optimizations**

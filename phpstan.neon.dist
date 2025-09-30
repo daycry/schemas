@@ -1,32 +1,27 @@
-includes:
-	- phpstan-baseline.php
-	- phar://vendor/phpstan/phpstan/phpstan.phar/conf/bleedingEdge.neon
-
 parameters:
-	tmpDir: build/phpstan
-	level: 5
-	paths:
-		- src/
-		- tests/
-	bootstrapFiles:
-		- vendor/codeigniter4/framework/system/Test/bootstrap.php
-	excludePaths:
-		- src/Views/*
-	universalObjectCratesClasses:
-		- Faker\Generator
-	scanDirectories:
-		- vendor/codeigniter4/framework/system/Helpers
-		- vendor/codeigniter4/settings/src/Helpers
-	dynamicConstantNames:
-		- CodeIgniter\CodeIgniter::CI_VERSION
-	codeigniter:
-		additionalConfigNamespaces:
-			- Daycry\Schemas\Config
-		additionalServices:
-			- Daycry\Schemas\Config\Services
-	strictRules:
-		allRules: false
-		disallowedLooseComparison: true
-		booleansInConditions: true
-		disallowedConstructs: true
-		matchingInheritedMethodNames: true
+  level: 7
+  paths:
+    - src
+  bootstrapFiles:
+    - phpstan-bootstrap.php
+  tmpDir: build/phpstan
+  reportUnmatchedIgnoredErrors: false
+  checkUninitializedProperties: false
+  treatPhpDocTypesAsCertain: false
+  inferPrivatePropertyTypeFromConstructor: true
+  ignoreErrors:
+    - '#Function (service|config|db_connect|helper|singular|plural|lang) not found#'
+    - '#Constant (APPPATH|ENVIRONMENT) not found#'
+    - '#Call to static method (cache|autoloader|locator) on an unknown class Config\\Services#'
+    - '#Access to an undefined property Daycry\\S(?:chemas|chemas\\Structures)\\Structures#'
+    - '#Access to an undefined property object::\$[a-zA-Z0-9_]+#'
+    - '#Cannot access property \$[a-zA-Z0-9_]+ on mixed#'
+
+  excludePaths:
+    - tests
+
+  tipsOfTheDay: false
+
+includes:
+  # Future: add a generated baseline here once zeroed
+

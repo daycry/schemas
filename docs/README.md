@@ -1,159 +1,142 @@
-# Daycry Schemas Library Documentation
+# Daycry Schemas Documentation
 
-Welcome to the comprehensive documentation for the Daycry Schemas library - a powerful CodeIgniter 4 library for database schema management, analysis, and optimization.
+Minimal, focused documentation for the current (lean) core of the Daycry Schemas library. All removed/legacy subsystems (validation engine, performance analyzer, advanced relation detector, intelligent cache manager, events/hooks, extended logging/metrics) have been dropped from the codebase and are intentionally absent here.
 
 ## Table of Contents
 
 ### Getting Started
 - [Installation](installation.md)
-- [Quick Start Guide](quick-start.md)
+- [Quick Start](quick-start.md)
 - [Configuration](configuration.md)
 
-### Core Features
-- [Schema Reading](core/schema-reading.md)
-- [Schema Drafting](core/schema-drafting.md)
-- [Schema Archiving](core/schema-archiving.md)
-- [Schema Structures](core/structures.md)
+### Core Concepts
+- Reading Schemas (via `Schemas` orchestrator & Reader handlers)
+- Drafting Schemas (database & directory drafters)
+- Archiving Schemas (cache / file)
+- [Structures](core/structures.md)
 
-### Advanced Features
-- [Schema Validation](advanced/validation.md)
-- [Intelligent Caching](advanced/caching.md)
-- [Performance Analysis](advanced/performance.md)
-- [Logging & Metrics](advanced/logging.md)
-- [Relationship Detection](advanced/relationships.md)
-- [Database Objects](advanced/database-objects.md)
-
-### Handlers
-- [Cache Handler](handlers/cache-handler.md)
-- [Database Handler](handlers/database-handler.md)
-- [Migration Handler](handlers/migration-handler.md)
-- [JSON Handler](handlers/json-handler.md)
-- [XML Handler](handlers/xml-handler.md)
-- [Database Object Handler](handlers/database-object-handler.md)
+### Handlers (Current Core)
+- Cache Reader / Archiver
+- Database Drafter
+- Directory (Migration) Drafter
+- Database Object Reader (views / procedures / triggers) – if present in build
+- JSON / File Archiver (basic format support)
 
 ### API Reference
-- [Classes Overview](api/classes.md)
-- [Configuration Options](api/configuration.md)
-- [Error Handling](api/error-handling.md)
-- [Events & Hooks](api/events.md)
+- [Classes Overview](api/classes.md) (pruned to current core)
+- Configuration (minimal options)
 
-### Examples & Tutorials
-- [Basic Usage Examples](examples/basic-usage.md)
-- [Advanced Scenarios](examples/advanced-scenarios.md)
-- [Performance Optimization](examples/performance-optimization.md)
-- [Integration Patterns](examples/integration-patterns.md)
-
-### Migration & Upgrading
-- [Migration Guide](migration/migration-guide.md)
-- [Breaking Changes](migration/breaking-changes.md)
-- [Upgrading from v1.x](migration/upgrading.md)
+### Examples
+- Basic usage (see `examples/basic-usage.md`)
+- Draft → Archive → Read round‑trip
+- Fluent Reader chaining
 
 ### Troubleshooting
 - [Common Issues](troubleshooting/common-issues.md)
-- [Performance Issues](troubleshooting/performance.md)
-- [Debugging Guide](troubleshooting/debugging.md)
 
 ### Contributing
-- [Development Setup](contributing/development.md)
-- [Testing Guidelines](contributing/testing.md)
-- [Code Standards](contributing/standards.md)
+- [Contribution Guide](../contributing.md) (general project guidelines)
 
 ## Overview
 
-The Daycry Schemas library provides a comprehensive solution for managing database schemas in CodeIgniter 4 applications. It offers:
+The library provides a pragmatic way to introspect, serialize and reuse database schema metadata inside CodeIgniter 4 applications. It focuses on:
 
-### Core Capabilities
-- **Schema Discovery**: Automatically detect and analyze database structures
-- **Cross-Database Support**: Works with MySQL, PostgreSQL, SQLite, and more
-- **Intelligent Caching**: Advanced caching with versioning and invalidation
-- **Performance Analysis**: Identify bottlenecks and optimization opportunities
-- **Validation & Integrity**: Ensure schema consistency and detect issues
+1. Drafting a schema from a live database (tables, fields, indexes, foreign keys, relations, and basic database objects when supported)
+2. Archiving the drafted schema for fast, repeatable access (cache or file)
+3. Reading the archived (or live) schema in a fluent, iterable structure model
 
-### Advanced Features
-- **Relationship Detection**: Discover complex relationships including polymorphic and hierarchical structures
-- **Database Objects**: Support for views, stored procedures, and triggers
-- **Export/Import**: Multiple format support (JSON, XML, PHP)
-- **Migration Integration**: Parse and analyze CodeIgniter migration files
-- **Comprehensive Logging**: PSR-3 compatible logging with performance metrics
+Removed subsystems previously covering validation, performance scoring, polymorphic detection, and extended logging have been intentionally excluded to keep maintenance surface minimal.
 
-### Architecture
-The library follows a modular architecture with three main components:
+## Core Architecture
 
-1. **Readers**: Extract schema information from various sources
-2. **Drafters**: Generate schemas from database connections
-3. **Archivers**: Store and retrieve schemas in different formats
+Component types:
 
-Each component can be extended with custom handlers to support additional functionality.
+- Readers: Load tables/objects from cache or other persisted mediums (`fetch`, `fetchAll`) using the new fluent interface returning `$this`.
+- Drafters: Introspect sources (database, migration directory, models) to build an in‑memory `Schema` object.
+- Archivers: Persist a `Schema` for later retrieval (cache or file JSON). XML or other formats may exist only if corresponding handlers remain in `src/`.
 
-## Quick Examples
+All structural elements extend a `Mergeable` base enabling dynamic property hydration and merging.
 
-### Basic Schema Reading
+## Quick Example
+
 ```php
 use Daycry\Schemas\Schemas;
 
 $schemas = new Schemas();
-$schema = $schemas->get();
+$schema  = $schemas->get(); // Drafts (if no archive) then returns a populated Schema instance
 
 foreach ($schema->tables as $table) {
     echo "Table: {$table->name}\n";
-    foreach ($table->fields as $field) {
-        echo "  Field: {$field->name} ({$field->type})\n";
-    }
 }
 ```
 
-### Performance Analysis
+### Round Trip (Draft → Archive → Read)
+
 ```php
-use Daycry\Schemas\PerformanceAnalyzer;
+use Daycry\Schemas\Schemas;
+use Daycry\Schemas\Archiver\Handlers\CacheArchiver;
+use Daycry\Schemas\Reader\Handlers\CacheHandler;
 
-$analyzer = new PerformanceAnalyzer();
-$analysis = $analyzer->analyzeSchema($schema);
+$ciConfig  = config('Schemas');
+$cache     = \Config\Services::cache();
 
-echo "Performance Score: {$analysis['score']}/100\n";
-foreach ($analysis['recommendations'] as $rec) {
-    echo "- {$rec['message']}\n";
-}
+// Draft fresh schema
+$schemas   = new Schemas($ciConfig, $cache);
+$schema    = $schemas->draft();
+
+// Archive
+$archiver  = new CacheArchiver($ciConfig, $cache);
+$archiver->archive($schema);
+
+// Later: read from cache
+$cacheReader = new CacheHandler($ciConfig, $cache);
+$cacheReader->fetchAll();
+$tables = $cacheReader->getTables();
 ```
 
-### Schema Validation
+## Fluent Reader Methods
+
+All reader handlers now return `$this` from `fetch($tables)` and `fetchAll()` allowing chaining:
+
 ```php
-use Daycry\Schemas\SchemaValidator;
-
-$validator = new SchemaValidator();
-$result = $validator->validateSchema($schema);
-
-if (!$result->isValid()) {
-    foreach ($result->getErrors() as $error) {
-        echo "Error: {$error}\n";
-    }
-}
+$cacheReader
+    ->fetch(['users'])
+    ->fetch(['posts'])
+    ->fetchAll();
 ```
 
-## Key Benefits
+## Structure Normalizations
 
-- **Zero Configuration**: Works out-of-the-box with sensible defaults
-- **High Performance**: Intelligent caching and optimized queries
-- **Extensible**: Plugin architecture for custom functionality
-- **Well Tested**: Comprehensive test suite with 125+ tests
-- **Production Ready**: Used in production environments
-- **Documentation**: Extensive documentation and examples
+- Field booleans (`primary_key`, `nullable`, `auto_increment`) are normalized internally; integer DB flags are cast to strict booleans.
+- ForeignKey column names that may emerge as arrays from certain drivers are reduced to the first element.
+- Relation inverse table names fallback to a non-null string to prevent null propagation.
+
+## What’s Not Here Anymore
+
+The following concepts were removed and should not appear in new integrations or documentation examples:
+
+- Schema validation engine (`SchemaValidator`)
+- Performance analyzer (`PerformanceAnalyzer`)
+- Advanced relation detector / polymorphic mapping
+- Intelligent cache manager with tagging/versioning
+- Extended logging / `SchemaLogger` (now a deprecated no‑op stub for BC)
+- Event/hook system & plugin architecture
+- Multi-format export/import beyond currently present archiver handlers
 
 ## Requirements
 
-- PHP 8.1 or higher
+- PHP 8.1+
 - CodeIgniter 4.x
-- Supported databases: MySQL 5.7+, PostgreSQL 10+, SQLite 3.7+
+- A supported database driver consistent with the active CI4 application
 
 ## License
 
-This library is open-sourced software licensed under the [MIT License](../LICENSE).
+MIT. See [LICENSE](../LICENSE).
 
-## Support
+## Getting Help
 
-- [GitHub Issues](https://github.com/daycry/schemas/issues)
-- [Discussions](https://github.com/daycry/schemas/discussions)
-- [Community Forum](https://forum.codeigniter.com/)
+- Issues: https://github.com/daycry/schemas/issues
 
 ---
 
-**Next Steps**: Start with the [Installation Guide](installation.md) or jump into the [Quick Start Guide](quick-start.md) to begin using the library.
+Start with [Installation](installation.md) or go straight to the [Quick Start](quick-start.md).

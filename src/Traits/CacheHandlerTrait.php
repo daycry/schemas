@@ -21,24 +21,20 @@ trait CacheHandlerTrait
 {
     /**
      * The cache handler instance.
-     *
-     * @var CacheInterface
      */
-    protected $cache;
+    protected CacheInterface $cache;
 
     /**
      * The name for the cache key to store to & retrieve from.
-     *
-     * @var string
      */
-    protected $cacheKey;
+    protected string $cacheKey;
 
     /**
      * Set up the injected cache or load a default handler
      *
      * @param CacheInterface $cache The cache handler to use, null to load a new default
      */
-    public function cacheInit(?CacheInterface $cache = null)
+    public function cacheInit(?CacheInterface $cache = null): void
     {
         // By default use an enviroment-specific name (helps with testing collisions)
         $this->cacheKey = 'schema-' . ENVIRONMENT;
@@ -62,7 +58,7 @@ trait CacheHandlerTrait
      *
      * @return $this
      */
-    public function setKey(string $name)
+    public function setKey(string $name): static
     {
         $this->cacheKey = $name;
 

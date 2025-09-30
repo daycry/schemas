@@ -17,15 +17,20 @@ use CodeIgniter\Config\BaseConfig;
 use Daycry\Schemas\Drafter\BaseDrafter;
 use Daycry\Schemas\Drafter\DrafterInterface;
 use Daycry\Schemas\Structures\Schema;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use SplFileInfo;
 
-class DirectoryHandler extends BaseDrafter implements DrafterInterface
+/**
+ * Final directory drafter handler.
+ * Iterates PHP schema definition files inside a directory and merges them.
+ */
+final class DirectoryHandler extends BaseDrafter implements DrafterInterface
 {
     /**
      * Path to the schemas directory.
-     *
-     * @var string
      */
-    protected $path;
+    protected string $path;
 
     /**
      * Save the directory path or load the default from the config
@@ -44,9 +49,11 @@ class DirectoryHandler extends BaseDrafter implements DrafterInterface
      *
      * @param string $path Path to the directory with the schema files.
      */
-    public function setPath(string $path)
+    public function setPath(string $path): static
     {
         $this->path = $path;
+
+        return $this;
     }
 
     /**
@@ -54,8 +61,16 @@ class DirectoryHandler extends BaseDrafter implements DrafterInterface
      */
     public function draft(): ?Schema
     {
-        helper('filesystem');
-        $files = get_filenames($this->path, true);
+        $files = [];
+        if (is_dir($this->path)) {
+            $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->path));
+
+            foreach ($iterator as $fileInfo) {
+                if ($fileInfo instanceof SplFileInfo && $fileInfo->isFile()) {
+                    $files[] = $fileInfo->getPathname();
+                }
+            }
+        }
 
         if (empty($files)) {
             $this->errors[] = lang('Schemas.emptySchemaDirectory', [$this->config->schemasDirectory]);
@@ -96,10 +111,12 @@ class DirectoryHandler extends BaseDrafter implements DrafterInterface
             if (! class_exists($class)) {
                 return null;
             }
+            $instance = new $class($this->config, $path);
+            if ($instance instanceof DrafterInterface) {
+                return $instance;
+            }
 
-            $class = new $class($this->config, $path);
-
-            return new $class($this->config, $path);
+            return null;
         }
 
         return null;

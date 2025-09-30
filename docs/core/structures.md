@@ -4,7 +4,7 @@ This document describes the core data structures used by the Daycry Schemas libr
 
 ## Overview
 
-The library uses a hierarchical structure to represent database schemas:
+The library uses a hierarchical structure to represent database schemas. The current minimal core focuses on fundamental relational constructs (tables, fields, indexes, foreign keys, relations) plus optional database objects if their handlers are present.
 
 ```
 Schema
@@ -153,7 +153,7 @@ $table->relations = new Mergeable();
 
 ### Field
 
-Represents a table column/field.
+Represents a table column/field. Constructor logic normalizes common database driver outputs (e.g. integer flags → booleans).
 
 ```php
 class Field extends Mergeable
@@ -333,7 +333,7 @@ $textIndex->lengths = [100]; // Index first 100 characters
 
 ### ForeignKey
 
-Represents a foreign key constraint.
+Represents a foreign key constraint. Some drivers may return column identifiers as arrays; these are reduced to the first element during construction.
 
 ```php
 class ForeignKey extends Mergeable
@@ -788,6 +788,12 @@ The library handles different database types consistently:
 
 ### SQLite Types
 - `INTEGER`, `REAL`, `TEXT`, `BLOB`, `NUMERIC`
+
+## Normalization Summary
+
+- Boolean flags (`primary_key`, `nullable`, `auto_increment`) are force‑cast to strict bool values so you may safely rely on type.
+- Foreign key local / foreign column names arriving as arrays are coerced to their first string item.
+- Relation inverse table names default to an empty string instead of null to avoid null propagation.
 
 ## Best Practices
 

@@ -28,11 +28,11 @@ final class MigrationHandlerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Create temporary directory for test migrations
         $this->tempDir = sys_get_temp_dir() . '/schema_migrations_test_' . uniqid();
         mkdir($this->tempDir, 0755, true);
-        
+
         $this->handler = new MigrationHandler(null, $this->tempDir . '/');
     }
 
@@ -41,6 +41,7 @@ final class MigrationHandlerTest extends TestCase
         // Clean up temporary directory
         if (is_dir($this->tempDir)) {
             $files = glob($this->tempDir . '/*');
+
             foreach ($files as $file) {
                 if (is_file($file)) {
                     unlink($file);
@@ -48,7 +49,7 @@ final class MigrationHandlerTest extends TestCase
             }
             rmdir($this->tempDir);
         }
-        
+
         parent::tearDown();
     }
 
@@ -90,10 +91,10 @@ class CreateUsersTable extends \CodeIgniter\Database\Migration
         $this->forge->createTable("users");
     }
 }';
-        
+
         $migrationFile = $this->tempDir . '/001_create_users_table.php';
         file_put_contents($migrationFile, $migrationContent);
-        
+
         $result = $this->handler->fetch([$migrationFile]);
         $this->assertInstanceOf(MigrationHandler::class, $result);
     }
@@ -111,19 +112,19 @@ class CreateUsersTable extends \CodeIgniter\Database\Migration
     }
 }',
             '002_create_posts_table.php' => '<?php
-class CreatePostsTable extends \CodeIgniter\Database\Migration  
+class CreatePostsTable extends \CodeIgniter\Database\Migration
 {
     public function up()
     {
         $this->forge->createTable("posts");
     }
-}'
+}',
         ];
-        
+
         foreach ($migrations as $filename => $content) {
             file_put_contents($this->tempDir . '/' . $filename, $content);
         }
-        
+
         $result = $this->handler->fetchAll();
         $this->assertInstanceOf(MigrationHandler::class, $result);
     }
@@ -132,7 +133,7 @@ class CreatePostsTable extends \CodeIgniter\Database\Migration
     {
         // Test magic getter and isset
         $this->handler->fetchAll();
-        
+
         // Test accessing non-existent table
         $this->assertNull($this->handler->nonexistent_table);
         $this->assertFalse(isset($this->handler->nonexistent_table));
@@ -163,7 +164,7 @@ class CreateUsersTable extends \CodeIgniter\Database\Migration
                 "auto_increment" => true,
             ],
             "username" => [
-                "type" => "VARCHAR", 
+                "type" => "VARCHAR",
                 "constraint" => 100,
                 "null" => false,
             ],
@@ -178,12 +179,12 @@ class CreateUsersTable extends \CodeIgniter\Database\Migration
         $this->forge->createTable("users");
     }
 }';
-        
+
         $migrationFile = $this->tempDir . '/create_users_table.php';
         file_put_contents($migrationFile, $migrationContent);
-        
+
         $this->handler->fetch([$migrationFile]);
-        
+
         // Test that table was created during parsing
         $tables = $this->handler->getTables();
         $this->assertNotNull($tables);
@@ -210,12 +211,12 @@ class ModifyUsersTable extends \CodeIgniter\Database\Migration
         ]);
     }
 }';
-        
+
         $migrationFile = $this->tempDir . '/modify_users_table.php';
         file_put_contents($migrationFile, $migrationContent);
-        
+
         $this->handler->fetch([$migrationFile]);
-        
+
         $tables = $this->handler->getTables();
         $this->assertNotNull($tables);
     }
@@ -231,12 +232,12 @@ class AddIndexToUsers extends \CodeIgniter\Database\Migration
         $this->forge->addKey("email", false, true); // unique
     }
 }';
-        
+
         $migrationFile = $this->tempDir . '/add_index_to_users.php';
         file_put_contents($migrationFile, $migrationContent);
-        
+
         $this->handler->fetch([$migrationFile]);
-        
+
         $tables = $this->handler->getTables();
         $this->assertNotNull($tables);
     }
@@ -251,12 +252,12 @@ class AddForeignKeys extends \CodeIgniter\Database\Migration
         $this->forge->addForeignKey("user_id", "users", "id", "CASCADE", "CASCADE");
     }
 }';
-        
+
         $migrationFile = $this->tempDir . '/add_foreign_keys.php';
         file_put_contents($migrationFile, $migrationContent);
-        
+
         $this->handler->fetch([$migrationFile]);
-        
+
         $tables = $this->handler->getTables();
         $this->assertNotNull($tables);
     }
@@ -265,7 +266,7 @@ class AddForeignKeys extends \CodeIgniter\Database\Migration
     {
         $result = $this->handler->fetch(['nonexistent_file.php']);
         $this->assertInstanceOf(MigrationHandler::class, $result);
-        
+
         // Should not throw an error, just silently skip
         $this->assertSame(0, $this->handler->count());
     }

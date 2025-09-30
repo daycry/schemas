@@ -16,47 +16,39 @@ namespace Daycry\Schemas\Reader\Handlers;
 use Daycry\Schemas\Config\Schemas as SchemasConfig;
 use Daycry\Schemas\Reader\BaseReader;
 use Daycry\Schemas\Reader\ReaderInterface;
-use Daycry\Schemas\Structures\Mergeable;
-use Daycry\Schemas\Structures\Schema;
-use Daycry\Schemas\Structures\Table;
 use Daycry\Schemas\Structures\Field;
-use Daycry\Schemas\Structures\Index;
 use Daycry\Schemas\Structures\ForeignKey;
+use Daycry\Schemas\Structures\Index;
+use Daycry\Schemas\Structures\Mergeable;
+use Daycry\Schemas\Structures\Table;
 
 /**
  * Migration Handler
- * 
+ *
  * Reads CodeIgniter 4 migration files to generate schemas
  */
 class MigrationHandler extends BaseReader implements ReaderInterface
 {
     /**
      * Migration files directory
-     *
-     * @var string
      */
-    protected $migrationPath;
+    protected string $migrationPath;
 
     /**
      * Loaded tables
-     *
-     * @var Mergeable|null
      */
-    protected $tables;
+    protected ?Mergeable $tables;
 
     /**
      * Constructor
-     *
-     * @param SchemasConfig $config
-     * @param string        $migrationPath
      */
-    public function __construct(?SchemasConfig $config = null, string $migrationPath = null)
+    public function __construct(?SchemasConfig $config = null, ?string $migrationPath = null)
     {
         parent::__construct($config);
-        
+
         $this->migrationPath = $migrationPath ?? APPPATH . 'Database/Migrations/';
-        $this->tables = new Mergeable();
-        $this->ready = is_dir($this->migrationPath);
+        $this->tables        = new Mergeable();
+        $this->ready         = is_dir($this->migrationPath);
     }
 
     /**
@@ -70,21 +62,17 @@ class MigrationHandler extends BaseReader implements ReaderInterface
     /**
      * Fetch specified migration files
      *
-     * @param array|string $migrations
-     *
-     * @return $this
+     * @param array<int,string>|string $migrations
      */
-    public function fetch($migrations)
+    public function fetch(array|string $migrations): static
     {
-        if (!$this->ensureReady()) {
+        if (! $this->ensureReady()) {
             return $this;
         }
 
-        if (is_string($migrations)) {
-            $migrations = [$migrations];
-        }
+        $list = is_string($migrations) ? [$migrations] : $migrations;
 
-        foreach ($migrations as $migration) {
+        foreach ($list as $migration) {
             $this->parseMigrationFile($migration);
         }
 
@@ -93,17 +81,13 @@ class MigrationHandler extends BaseReader implements ReaderInterface
 
     /**
      * Fetch all migration files
-     *
-     * @return $this
      */
-    public function fetchAll()
+    public function fetchAll(): static
     {
-        if (!$this->ensureReady()) {
+        if (! $this->ensureReady()) {
             return $this;
         }
-
         $files = glob($this->migrationPath . '*.php');
-        
         if ($files === false) {
             return $this;
         }
@@ -120,9 +104,9 @@ class MigrationHandler extends BaseReader implements ReaderInterface
      */
     protected function parseMigrationFile(string $file): void
     {
-        if (!file_exists($file)) {
+        if (! file_exists($file)) {
             $file = $this->migrationPath . $file;
-            if (!file_exists($file)) {
+            if (! file_exists($file)) {
                 return;
             }
         }
@@ -134,13 +118,13 @@ class MigrationHandler extends BaseReader implements ReaderInterface
 
         // Parse table creations
         $this->parseCreateTable($content);
-        
+
         // Parse table modifications
         $this->parseModifyTable($content);
-        
+
         // Parse index creations
         $this->parseIndexes($content);
-        
+
         // Parse foreign keys
         $this->parseForeignKeys($content);
     }
@@ -152,16 +136,16 @@ class MigrationHandler extends BaseReader implements ReaderInterface
     {
         // Match createTable calls
         preg_match_all('/\$this->forge->createTable\s*\(\s*[\'"]([^\'\"]+)[\'"]/', $content, $matches);
-        
+
         foreach ($matches[1] as $tableName) {
-            if (!property_exists($this->tables, $tableName)) {
+            if (! property_exists($this->tables, $tableName)) {
                 $this->tables->{$tableName} = new Table($tableName);
             }
         }
 
         // Parse field definitions within createTable blocks
         preg_match_all('/\$this->forge->addField\s*\(\s*\[([^\]]+)\]/', $content, $fieldMatches);
-        
+
         foreach ($fieldMatches[1] as $fieldsBlock) {
             $this->parseFieldBlock($fieldsBlock);
         }
@@ -174,34 +158,34 @@ class MigrationHandler extends BaseReader implements ReaderInterface
     {
         // This is a simplified parser - in reality, you'd need a more sophisticated approach
         preg_match_all('/[\'"]([^\'\"]+)[\'\"]\s*=>\s*\[([^\]]+)\]/', $fieldsBlock, $matches);
-        
+
         for ($i = 0; $i < count($matches[1]); $i++) {
             $fieldName = $matches[1][$i];
-            $fieldDef = $matches[2][$i];
-            
+            $fieldDef  = $matches[2][$i];
+
             $field = new Field($fieldName);
-            
+
             // Parse field properties
             if (preg_match('/[\'"]type[\'\"]\s*=>\s*[\'"]([^\'\"]+)/', $fieldDef, $typeMatch)) {
                 $field->type = $typeMatch[1];
             }
-            
+
             if (preg_match('/[\'"]constraint[\'\"]\s*=>\s*(\d+)/', $fieldDef, $constraintMatch)) {
                 $field->max_length = (int) $constraintMatch[1];
             }
-            
+
             if (preg_match('/[\'"]null[\'\"]\s*=>\s*(true|false)/', $fieldDef, $nullMatch)) {
                 $field->nullable = $nullMatch[1] === 'true';
             }
-            
+
             if (preg_match('/[\'"]auto_increment[\'\"]\s*=>\s*true/', $fieldDef)) {
                 $field->auto_increment = true;
             }
-            
+
             if (preg_match('/[\'"]default[\'\"]\s*=>\s*[\'"]([^\'\"]+)/', $fieldDef, $defaultMatch)) {
                 $field->default = $defaultMatch[1];
             }
-            
+
             // Store field - we'd need to associate it with the correct table
             // For simplicity, we'll store it in a temporary way
         }
@@ -214,15 +198,15 @@ class MigrationHandler extends BaseReader implements ReaderInterface
     {
         // Parse modifyColumn, addColumn, dropColumn calls
         preg_match_all('/\$this->forge->(addColumn|modifyColumn|dropColumn)\s*\(\s*[\'"]([^\'\"]+)[\'"]/', $content, $matches);
-        
+
         for ($i = 0; $i < count($matches[1]); $i++) {
             $operation = $matches[1][$i];
             $tableName = $matches[2][$i];
-            
-            if (!property_exists($this->tables, $tableName)) {
+
+            if (! property_exists($this->tables, $tableName)) {
                 $this->tables->{$tableName} = new Table($tableName);
             }
-            
+
             // Further parsing would be needed for specific column changes
         }
     }
@@ -234,11 +218,11 @@ class MigrationHandler extends BaseReader implements ReaderInterface
     {
         // Parse addKey calls
         preg_match_all('/\$this->forge->addKey\s*\(\s*[\'"]([^\'\"]+)[\'"](?:\s*,\s*(true|false))?\s*\)/', $content, $matches);
-        
+
         for ($i = 0; $i < count($matches[1]); $i++) {
             $fieldName = $matches[1][$i];
             $isPrimary = isset($matches[2][$i]) && $matches[2][$i] === 'true';
-            
+
             // Would need to associate with correct table and create Index objects
         }
     }
@@ -250,12 +234,12 @@ class MigrationHandler extends BaseReader implements ReaderInterface
     {
         // Parse addForeignKey calls
         preg_match_all('/\$this->forge->addForeignKey\s*\(\s*[\'"]([^\'\"]+)[\'\"]\s*,\s*[\'"]([^\'\"]+)[\'\"]\s*,\s*[\'"]([^\'\"]+)[\'"]/', $content, $matches);
-        
+
         for ($i = 0; $i < count($matches[1]); $i++) {
-            $localField = $matches[1][$i];
+            $localField   = $matches[1][$i];
             $foreignTable = $matches[2][$i];
             $foreignField = $matches[3][$i];
-            
+
             // Would create ForeignKey objects and associate with tables
         }
     }
@@ -273,17 +257,23 @@ class MigrationHandler extends BaseReader implements ReaderInterface
      */
     public function getIterator(): Mergeable
     {
-        return $this->fetchAll()->tables;
+        if ($this->tables === null) {
+            $this->tables = new Mergeable();
+        }
+        $this->fetchAll();
+
+        return $this->tables;
     }
 
     /**
      * Magic getter for table access
      */
-    public function __get(string $name)
+    public function __get(string $name): mixed
     {
         if ($this->tables && property_exists($this->tables, $name)) {
             return $this->tables->{$name};
         }
+
         return null;
     }
 

@@ -13,25 +13,35 @@ declare(strict_types=1);
 
 namespace Daycry\Schemas\Structures;
 
-class Index extends Mergeable
+final class Index extends Mergeable
 {
-    /**
-     * The index name.
-     *
-     * @var string
-     */
-    public $name;
+    public string $name = '';
 
-    public function __construct($indexData = null)
+    /**
+     * @var list<string>
+     */
+    public array $fields = [];
+
+    public ?string $type = null;
+    public bool $unique  = false;
+
+    /**
+     * @param array<string,mixed>|string|null $indexData
+     */
+    public function __construct(array|string|null $indexData = null)
     {
-        if (empty($indexData)) {
+        if ($indexData === null || $indexData === '') {
+            return;
+        }
+        if (is_string($indexData)) {
+            $this->name = $indexData;
+
             return;
         }
 
-        if (is_string($indexData)) {
-            $this->name = $indexData;
-        } else {
-            foreach ($indexData as $key => $value) {
+        foreach ($indexData as $key => $value) {
+            if (property_exists($this, $key)) {
+                /** @phpstan-ignore-next-line dynamic assign */
                 $this->{$key} = $value;
             }
         }

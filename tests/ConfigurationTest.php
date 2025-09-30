@@ -1,11 +1,23 @@
 <?php
 
+/**
+ * This file is part of Daycry Schemas.
+ *
+ * (c) Daycry <daycry9@proton.me>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Tests;
 
 use Daycry\Schemas\Config\Schemas as SchemasConfig;
 use Tests\Support\TestCase;
 
-class ConfigurationTest extends TestCase
+/**
+ * @internal
+ */
+final class ConfigurationTest extends TestCase
 {
     protected SchemasConfig $testConfig;
 
@@ -27,63 +39,53 @@ class ConfigurationTest extends TestCase
     public function testCacheConfigurationDefaults(): void
     {
         $this->assertFalse($this->testConfig->cache['enabled']);
-        
-        // In testing environment, TTL is set to 60, otherwise 3600
-        $expectedTtl = ENVIRONMENT === 'testing' ? 60 : 3600;
-        $this->assertEquals($expectedTtl, $this->testConfig->cache['ttl']);
-        
-        $this->assertEquals('file', $this->testConfig->cache['handler']);
-        $this->assertEquals('schemas_', $this->testConfig->cache['prefix']);
+        // TTL is constant now (environment-specific override removed)
+        $this->assertSame(3600, $this->testConfig->cache['ttl']);
+
+        $this->assertSame('file', $this->testConfig->cache['handler']);
+        $this->assertSame('schemas_', $this->testConfig->cache['prefix']);
     }
 
     public function testDeprecatedTtlPropertyDoesNotExist(): void
     {
-        $this->assertFalse(property_exists($this->testConfig, 'ttl'), 
-            'The deprecated $ttl property should not exist');
+        $this->assertFalse(
+            property_exists($this->testConfig, 'ttl'),
+            'The deprecated $ttl property should not exist',
+        );
     }
 
     public function testNewConfigurationOptionsExist(): void
     {
         // Test new configuration options
         $this->assertObjectHasProperty('defaultGroup', $this->testConfig);
-        
-        // Test new configuration arrays
-        $this->assertObjectHasProperty('logging', $this->testConfig);
         $this->assertObjectHasProperty('relationships', $this->testConfig);
-        $this->assertObjectHasProperty('validation', $this->testConfig);
         $this->assertObjectHasProperty('development', $this->testConfig);
-    }
-
-    public function testLoggingConfiguration(): void
-    {
-        $this->assertIsArray($this->testConfig->logging);
-        $this->assertArrayHasKey('enabled', $this->testConfig->logging);
-        $this->assertArrayHasKey('level', $this->testConfig->logging);
-        
-        $this->assertFalse($this->testConfig->logging['enabled']);
-        $this->assertEquals('info', $this->testConfig->logging['level']);
     }
 
     public function testRelationshipsConfiguration(): void
     {
-        $this->assertIsArray($this->testConfig->relationships);
-        $this->assertArrayHasKey('enabled', $this->testConfig->relationships);
-        $this->assertArrayHasKey('detect_polymorphic', $this->testConfig->relationships);
-        $this->assertArrayHasKey('detect_many_to_many', $this->testConfig->relationships);
-        
-        $this->assertTrue($this->testConfig->relationships['enabled']);
-        $this->assertTrue($this->testConfig->relationships['detect_polymorphic']);
-        $this->assertTrue($this->testConfig->relationships['detect_many_to_many']);
+        $this->assertIsBool($this->testConfig->relationships);
+        $this->assertTrue($this->testConfig->relationships);
     }
 
-    public function testValidationConfiguration(): void
+    public function testCacheConfigShape(): void
     {
-        $this->assertIsArray($this->testConfig->validation);
-        $this->assertArrayHasKey('enabled', $this->testConfig->validation);
-        $this->assertArrayHasKey('strict_mode', $this->testConfig->validation);
-        
-        $this->assertFalse($this->testConfig->validation['enabled']);
-        $this->assertFalse($this->testConfig->validation['strict_mode']);
+        $c = $this->testConfig->cache;
+        $this->assertArrayHasKey('enabled', $c);
+        $this->assertArrayHasKey('ttl', $c);
+        $this->assertArrayHasKey('prefix', $c);
+        $this->assertIsBool($c['enabled']);
+        $this->assertIsInt($c['ttl']);
+        $this->assertIsString($c['prefix']);
+    }
+
+    public function testDevelopmentConfigShape(): void
+    {
+        $d = $this->testConfig->development;
+        $this->assertArrayHasKey('schema_diff_tool', $d);
+        $this->assertArrayHasKey('migration_generator', $d);
+        $this->assertIsBool($d['schema_diff_tool']);
+        $this->assertIsBool($d['migration_generator']);
     }
 
     public function testLegacyConfigurationStillExists(): void

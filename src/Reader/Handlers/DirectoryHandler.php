@@ -15,13 +15,18 @@ namespace Daycry\Schemas\Reader\Handlers;
 
 use Daycry\Schemas\Reader\BaseReader;
 use Daycry\Schemas\Structures\Schema;
+use Throwable;
 
 /**
  * DirectoryHandler for reading schemas from directory
  *
  * Reads schema files from a specified directory
  */
-class DirectoryHandler extends BaseReader
+/**
+ * Final directory reader handler.
+ * Reads PHP schema files directly into a Schema instance (runtime import).
+ */
+final class DirectoryHandler extends BaseReader
 {
     /**
      * Read schema from directory
@@ -29,19 +34,19 @@ class DirectoryHandler extends BaseReader
     public function read(string $path): Schema
     {
         $schema = new Schema();
-        
+
         // If path is just 'directory' use the default schemas directory
         if ($path === 'directory') {
             $path = $this->config->schemasDirectory;
         }
-        
-        if (!is_dir($path)) {
+
+        if (! is_dir($path)) {
             return $schema;
         }
-        
+
         // Scan directory for schema files
-        $files = glob($path . '/*.php');
-        
+        $files = glob($path . '/*.php') ?: [];
+
         foreach ($files as $file) {
             if (is_readable($file)) {
                 $tableSchema = $this->readSchemaFile($file);
@@ -50,10 +55,10 @@ class DirectoryHandler extends BaseReader
                 }
             }
         }
-        
+
         return $schema;
     }
-    
+
     /**
      * Read individual schema file
      */
@@ -62,32 +67,31 @@ class DirectoryHandler extends BaseReader
         try {
             // Include the file and expect it to return a schema array or object
             $data = include $file;
-            
+
             if (is_array($data)) {
                 return $this->arrayToSchema($data);
             }
-            
+
             if ($data instanceof Schema) {
                 return $data;
             }
-            
-        } catch (\Throwable $e) {
-            // Log error if logging is enabled
-            if ($this->config->logging['enabled'] ?? false) {
-                log_message('error', 'Failed to read schema file: ' . $file . ' - ' . $e->getMessage());
-            }
+        } catch (Throwable $e) {
+            // Logging removed; ignore and continue.
         }
-        
+
         return null;
     }
-    
+
     /**
      * Convert array data to Schema object
+     */
+    /**
+     * @param array<string,mixed> $data
      */
     private function arrayToSchema(array $data): Schema
     {
         $schema = new Schema();
-        
+
         foreach ($data as $tableName => $tableData) {
             if (is_array($tableData)) {
                 // Convert table data to appropriate structures
@@ -95,7 +99,7 @@ class DirectoryHandler extends BaseReader
                 $schema->tables->{$tableName} = (object) $tableData;
             }
         }
-        
+
         return $schema;
     }
 }

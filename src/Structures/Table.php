@@ -13,51 +13,19 @@ declare(strict_types=1);
 
 namespace Daycry\Schemas\Structures;
 
-class Table extends Mergeable
+final class Table extends Mergeable
 {
-    /**
-     * The table name.
-     *
-     * @var ?string
-     */
-    public $name;
+    public ?string $name = null;
+    public bool $pivot   = false;
+    public Mergeable $fields;
+    public Mergeable $indexes;
+    public Mergeable $foreignKeys;
+    public Mergeable $relations;
+    public ?string $comment   = null;
+    public ?string $engine    = null;
+    public ?string $collation = null;
 
-    /**
-     * Whether the table is a pivot.
-     *
-     * @var bool
-     */
-    public $pivot = false;
-
-    /**
-     * The table's fields.
-     *
-     * @var Mergeable of Field objects
-     */
-    public $fields;
-
-    /**
-     * The table's indices.
-     *
-     * @var Mergeable of Index objects
-     */
-    public $indexes;
-
-    /**
-     * The table's foreign keys.
-     *
-     * @var Mergeable of ForeignKey objects
-     */
-    public $foreignKeys;
-
-    /**
-     * Relationships this table has with others
-     *
-     * @var Mergeable of Relations
-     */
-    public $relations;
-
-    public function __construct($name = null)
+    public function __construct(?string $name = null)
     {
         $this->name        = $name;
         $this->fields      = new Mergeable();

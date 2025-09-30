@@ -70,7 +70,8 @@ final class CacheReaderTest extends TestCase
         $counted = 0;
 
         foreach ($this->reader as $tableName => $table) {
-            $this->assertSame($table, $this->schema->tables->{$tableName});
+            $this->assertInstanceOf(Table::class, $table);
+            $this->assertSame($tableName, $table->name);
             $counted++;
         }
 

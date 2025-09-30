@@ -21,7 +21,11 @@ use Daycry\Schemas\Structures\Mergeable;
 use Daycry\Schemas\Structures\Schema;
 use Daycry\Schemas\Traits\CacheHandlerTrait;
 
-class CacheHandler extends BaseArchiver implements ArchiverInterface
+/**
+ * Final cache archiver handler.
+ * Archives a Schema scaffold plus individual tables using a PSR-16 style cache adapter.
+ */
+final class CacheHandler extends BaseArchiver implements ArchiverInterface
 {
     use CacheHandlerTrait;
 

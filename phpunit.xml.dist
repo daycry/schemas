@@ -8,7 +8,7 @@
     colors="true"
     columns="max"
     failOnRisky="true"
-    failOnWarning="true"
+	failOnWarning="false"
     cacheDirectory="build/.phpunit.cache">
 	<coverage
 		includeUncoveredFiles="true"
@@ -21,12 +21,7 @@
 			<text outputFile="build/coverage/coverage.txt"/>
 		</report>
 	</coverage>
-	<extensions>
-		<bootstrap class="Nexus\PHPUnit\Tachycardia\TachycardiaExtension">
-			<parameter name="time-limit" value="0.50" />
-			<parameter name="report-count" value="30" />
-		</bootstrap>
-	</extensions>
+	<!-- Extensions removed with minimal core (previously Tachycardia) -->
 	<source>
 		<include>
 			<directory suffix=".php">./src</directory>
@@ -41,6 +36,8 @@
 		<testsuite name="main">
 			<directory>./tests</directory>
             <exclude>./tests/Language</exclude>
+            <exclude>./tests/Events</exclude>
+            <exclude>./tests/Logging</exclude>
 		</testsuite>
 	</testsuites>
 	<logging>

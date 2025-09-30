@@ -100,7 +100,7 @@ abstract class BaseDrafter extends BaseHandler
      *
      * @throws FileNotFoundException
      */
-    protected function getContents($path): ?string
+    protected function getContents(string $path): ?string
     {
         $file = new File($path, $this->config->silent); // If not silent then will throw for missing files
 
@@ -110,6 +110,11 @@ abstract class BaseDrafter extends BaseHandler
             return null;
         }
 
-        return file_get_contents($file->getRealPath());
+        $contents = file_get_contents($file->getRealPath());
+        if ($contents === false) {
+            return null; // Normalize false to null for consistent return type
+        }
+
+        return $contents;
     }
 }

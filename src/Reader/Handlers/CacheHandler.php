@@ -21,14 +21,15 @@ use Daycry\Schemas\Structures\Mergeable;
 use Daycry\Schemas\Structures\Table;
 use Daycry\Schemas\Traits\CacheHandlerTrait;
 
-class CacheHandler extends BaseReader implements ReaderInterface
+/**
+ * Final cache reader handler.
+ * Lazily loads scaffold & tables from cache written by the archiver CacheHandler.
+ */
+final class CacheHandler extends BaseReader implements ReaderInterface
 {
     use CacheHandlerTrait;
 
-    /**
-     * @var Mergeable|null
-     */
-    protected $tables;
+    protected ?Mergeable $tables = null;
 
     /**
      * Save config and set up the cache
@@ -60,22 +61,18 @@ class CacheHandler extends BaseReader implements ReaderInterface
     /**
      * Fetch specified table(s) from the cache
      *
-     * @param array|string $tables
-     *
-     * @return $this
+     * @param array<int,string>|string $tables
      */
-    public function fetch($tables)
+    public function fetch(array|string $tables): static
     {
-        if (! $this->ensureReady()) {
+        if (! $this->ensureReady() || $this->tables === null) {
             return $this;
         }
 
-        if (is_string($tables)) {
-            $tables = [$tables];
-        }
+        $tableList = is_string($tables) ? [$tables] : $tables;
 
-        foreach ($tables as $tableName) {
-            if ($this->tables->{$tableName} === true) {
+        foreach ($tableList as $tableName) {
+            if (property_exists($this->tables, $tableName) && $this->tables->{$tableName} === true) {
                 $this->tables->{$tableName} = $this->cache->get($this->cacheKey . '-' . $tableName);
             }
         }
@@ -85,17 +82,18 @@ class CacheHandler extends BaseReader implements ReaderInterface
 
     /**
      * Fetch every table noted in the scaffold
-     *
-     * @return $this
      */
-    public function fetchAll()
+    public function fetchAll(): static
     {
-        if (! $this->ensureReady()) {
+        if (! $this->ensureReady() || $this->tables === null) {
             return $this;
         }
 
         foreach ($this->tables as $tableName => $value) {
             if ($value === true) {
+                if (! is_string($tableName)) {
+                    continue; // enforce string keys
+                }
                 $this->fetch($tableName);
             }
         }
@@ -148,6 +146,11 @@ class CacheHandler extends BaseReader implements ReaderInterface
      */
     public function getIterator(): Mergeable
     {
-        return $this->fetchAll()->tables;
+        if ($this->tables === null) {
+            $this->tables = new Mergeable();
+        }
+        $this->fetchAll();
+
+        return $this->tables;
     }
 }

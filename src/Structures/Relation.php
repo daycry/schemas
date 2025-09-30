@@ -13,33 +13,21 @@ declare(strict_types=1);
 
 namespace Daycry\Schemas\Structures;
 
-class Relation extends Mergeable
+final class Relation extends Mergeable
 {
-    /**
-     * The related table name.
-     *
-     * @var string
-     */
-    public $table;
+    public string $table   = '';
+    public string $type    = '';
+    public bool $singleton = false;
 
     /**
-     * The type of relationship.
+     * Pivot definitions between tables.
+     * Each pivot is either a 3 or 4 element array of table/field pairs.
+     * Allow nullable where some drivers don't supply column names.
      *
-     * @var string
+     * @var list<array{0:string|null,1:string|null,2?:string|null,3?:string|null}>
      */
-    public $type;
+    public array $pivots = [];
 
-    /**
-     * Whether the relation will be to a single object.
-     *
-     * @var bool
-     */
-    public $singleton;
-
-    /**
-     * Tables and columns for pivot and "through" relationships.
-     *
-     * @var array of [tableName, fieldName, foreignField]
-     */
-    public $pivots = [];
+    public ?string $pivot = null; // for some handlers referencing pivot
+    public ?string $field = null; // referencing field name in some relations
 }

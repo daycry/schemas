@@ -13,27 +13,41 @@ declare(strict_types=1);
 
 namespace Daycry\Schemas\Structures;
 
-class ForeignKey extends Mergeable
+final class ForeignKey extends Mergeable
 {
-    /**
-     * The foreign key constraint name.
-     *
-     * @var string
-     */
-    public $constraint_name;
+    public string $constraint_name      = '';
+    public ?string $column_name         = null;
+    public ?string $foreign_table_name  = null;
+    public ?string $foreign_column_name = null;
+    public ?string $on_delete           = null;
+    public ?string $on_update           = null;
 
-    public function __construct($foreignKeyData = null)
+    /**
+     * @param array<string,mixed>|string|null $foreignKeyData
+     */
+    public function __construct(array|string|null $foreignKeyData = null)
     {
-        if (empty($foreignKeyData)) {
+        if ($foreignKeyData === null || $foreignKeyData === '') {
+            return;
+        }
+        if (is_string($foreignKeyData)) {
+            $this->constraint_name = $foreignKeyData;
+
             return;
         }
 
-        if (is_string($foreignKeyData)) {
-            $this->constraint_name = $foreignKeyData;
-        } else {
-            foreach ($foreignKeyData as $key => $value) {
-                $this->{$key} = $value;
+        foreach ($foreignKeyData as $key => $value) {
+            if (! property_exists($this, $key)) {
+                continue;
             }
+
+            // Normalize column names that might come as arrays from drivers
+            if (in_array($key, ['column_name', 'foreign_column_name'], true) && is_array($value)) {
+                $value = $value[0] ?? null; // take first element or null
+            }
+
+            /** @phpstan-ignore-next-line */
+            $this->{$key} = $value;
         }
     }
 }

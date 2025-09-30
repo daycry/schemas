@@ -13,34 +13,44 @@ declare(strict_types=1);
 
 namespace Daycry\Schemas\Structures;
 
-class Field extends Mergeable
+final class Field extends Mergeable
 {
-    /**
-     * The field name.
-     *
-     * @var string
-     */
-    public $name;
+    public string $name         = '';
+    public bool $primary_key    = false;
+    public ?string $type        = null;
+    public ?int $max_length     = null;
+    public bool $nullable       = false;
+    public mixed $default       = null;
+    public bool $auto_increment = false;
+    public ?string $comment     = null;
 
     /**
-     * Whether this is a primary key.
-     *
-     * @var bool
+     * @param array<string,mixed>|string|null $fieldData
      */
-    public $primary_key;
-
-    public function __construct($fieldData = null)
+    public function __construct(array|string|null $fieldData = null)
     {
-        if (empty($fieldData)) {
+        if ($fieldData === null || $fieldData === '') {
             return;
         }
 
         if (is_string($fieldData)) {
             $this->name = $fieldData;
-        } else {
-            foreach ($fieldData as $key => $value) {
-                $this->{$key} = $value;
+
+            return;
+        }
+
+        foreach ($fieldData as $key => $value) {
+            if (! property_exists($this, $key)) {
+                continue;
             }
+
+            // Normalize booleans that might come as int/string from drivers
+            if (in_array($key, ['primary_key', 'nullable', 'auto_increment'], true)) {
+                $value = (bool) $value; // cast 0/1/'0'/'1' etc.
+            }
+
+            /** @phpstan-ignore-next-line dynamic assignment guarded */
+            $this->{$key} = $value;
         }
     }
 }

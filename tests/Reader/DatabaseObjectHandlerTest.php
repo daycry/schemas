@@ -14,9 +14,9 @@ declare(strict_types=1);
 namespace Tests\Reader;
 
 use Daycry\Schemas\Reader\Handlers\DatabaseObjectHandler;
-use Daycry\Schemas\Structures\View;
 use Daycry\Schemas\Structures\Procedure;
 use Daycry\Schemas\Structures\Trigger;
+use Daycry\Schemas\Structures\View;
 use Tests\Support\TestCase;
 
 /**
@@ -29,7 +29,7 @@ final class DatabaseObjectHandlerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->handler = new DatabaseObjectHandler();
     }
 
@@ -45,10 +45,10 @@ final class DatabaseObjectHandlerTest extends TestCase
         // Test fetching specific object types
         $result = $this->handler->fetch(['views']);
         $this->assertInstanceOf(DatabaseObjectHandler::class, $result);
-        
+
         $result = $this->handler->fetch('procedures');
         $this->assertInstanceOf(DatabaseObjectHandler::class, $result);
-        
+
         $result = $this->handler->fetch(['triggers']);
         $this->assertInstanceOf(DatabaseObjectHandler::class, $result);
     }
@@ -63,7 +63,7 @@ final class DatabaseObjectHandlerTest extends TestCase
     {
         // Test magic getter and isset
         $this->handler->fetchAll();
-        
+
         // These should exist even if empty
         $this->assertTrue(isset($this->handler->views) || $this->handler->views === null);
         $this->assertTrue(isset($this->handler->procedures) || $this->handler->procedures === null);
@@ -118,10 +118,10 @@ final class DatabaseObjectHandlerTest extends TestCase
 
     public function testViewWithDependencies(): void
     {
-        $view = new View('user_view');
-        $view->definition = 'SELECT * FROM users u JOIN profiles p ON u.id = p.user_id';
+        $view               = new View('user_view');
+        $view->definition   = 'SELECT * FROM users u JOIN profiles p ON u.id = p.user_id';
         $view->dependencies = ['users', 'profiles'];
-        
+
         $this->assertSame('user_view', $view->name);
         $this->assertContains('users', $view->dependencies);
         $this->assertContains('profiles', $view->dependencies);
@@ -129,15 +129,15 @@ final class DatabaseObjectHandlerTest extends TestCase
 
     public function testProcedureWithParameters(): void
     {
-        $procedure = new Procedure('get_user');
-        $procedure->type = 'FUNCTION';
+        $procedure             = new Procedure('get_user');
+        $procedure->type       = 'FUNCTION';
         $procedure->parameters = [
             ['name' => 'user_id', 'type' => 'INT', 'mode' => 'IN'],
-            ['name' => 'include_profile', 'type' => 'BOOLEAN', 'mode' => 'IN', 'default' => 'FALSE']
+            ['name' => 'include_profile', 'type' => 'BOOLEAN', 'mode' => 'IN', 'default' => 'FALSE'],
         ];
-        $procedure->returnType = 'TABLE';
+        $procedure->returnType    = 'TABLE';
         $procedure->deterministic = true;
-        
+
         $this->assertSame('FUNCTION', $procedure->type);
         $this->assertSame('TABLE', $procedure->returnType);
         $this->assertTrue($procedure->deterministic);
@@ -147,13 +147,13 @@ final class DatabaseObjectHandlerTest extends TestCase
 
     public function testTriggerWithEvents(): void
     {
-        $trigger = new Trigger('audit_trigger');
-        $trigger->table = 'users';
-        $trigger->timing = 'AFTER';
-        $trigger->events = ['INSERT', 'UPDATE', 'DELETE'];
+        $trigger             = new Trigger('audit_trigger');
+        $trigger->table      = 'users';
+        $trigger->timing     = 'AFTER';
+        $trigger->events     = ['INSERT', 'UPDATE', 'DELETE'];
         $trigger->definition = 'BEGIN INSERT INTO audit_log...; END';
-        $trigger->enabled = true;
-        
+        $trigger->enabled    = true;
+
         $this->assertSame('users', $trigger->table);
         $this->assertSame('AFTER', $trigger->timing);
         $this->assertContains('INSERT', $trigger->events);

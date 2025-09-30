@@ -1,20 +1,18 @@
-# Troubleshooting Guide
+# Troubleshooting (Minimal Core)
 
-This guide helps you resolve common issues when working with the Daycry Schemas library.
+Only core drafting, archiving, and reading remain. This guide drops sections about validation systems, performance analyzers, advanced relation detection, logging frameworks, async processing, and plugin infrastructure – those features were removed.
 
-## Table of Contents
-- [Installation Issues](#installation-issues)
-- [Configuration Problems](#configuration-problems)
-- [Database Connection Issues](#database-connection-issues)
-- [Performance Problems](#performance-problems)
-- [Cache Issues](#cache-issues)
-- [Memory and Timeout Issues](#memory-and-timeout-issues)
-- [Validation Errors](#validation-errors)
-- [Common Error Messages](#common-error-messages)
-- [Debugging Tips](#debugging-tips)
+## Sections
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Database Connection](#database-connection)
+- [Cache](#cache)
+- [Memory / Timeouts](#memory--timeouts)
+- [Common Errors](#common-errors)
+- [Debug Basics](#debug-basics)
 - [Best Practices](#best-practices)
 
-## Installation Issues
+## Installation
 
 ### Problem: Composer Installation Fails
 ```bash
@@ -75,7 +73,7 @@ composer clear-cache
 composer require daycry/schemas:^1.0
 ```
 
-## Configuration Problems
+## Configuration
 
 ### Problem: Configuration File Not Found
 ```php
@@ -139,7 +137,7 @@ $schemas = new Schemas();
 $schemas->setDatabase('default'); // Use 'default' instead
 ```
 
-## Database Connection Issues
+## Database Connection
 
 ### Problem: Connection Timeout
 ```php
@@ -209,37 +207,7 @@ CREATE DATABASE database_name CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 'database' => 'actual_database_name',
 ```
 
-## Performance Problems
-
-### Problem: Slow Schema Loading
-Schema takes more than 30 seconds to load.
-
-**Solutions:**
-1. **Enable Caching:**
-```php
-// app/Config/Schemas.php
-public array $cache = [
-    'enabled' => true,
-    'ttl' => 3600,
-    'handler' => 'redis' // Faster than file cache
-];
-```
-
-2. **Limit Tables:**
-```php
-// Only load specific tables
-public array $includedTables = ['users', 'posts', 'categories'];
-
-// Or ignore large tables
-public array $ignoredTables = ['logs', 'analytics', 'temp_data'];
-```
-
-3. **Optimize Database:**
-```sql
--- Analyze tables for better performance
-ANALYZE TABLE information_schema.tables;
-ANALYZE TABLE information_schema.columns;
-```
+## Cache
 
 ### Problem: High Memory Usage
 ```php
@@ -340,7 +308,7 @@ public array $cache = [
 ];
 ```
 
-## Memory and Timeout Issues
+## Memory / Timeouts
 
 ### Problem: Script Timeout
 ```php
@@ -384,47 +352,10 @@ foreach ($tableChunks as $chunk) {
 }
 ```
 
-## Validation Errors
+## (Removed Validation System)
+Foreign key / relation validation helpers were removed. Trust the database constraints; the drafter captures structure best-effort.
 
-### Problem: Foreign Key Validation Fails
-```php
-ValidationError: Foreign key references non-existent table
-```
-
-**Solutions:**
-1. **Check Table Order:**
-```php
-// Ensure referenced tables exist
-$config->includedTables = [
-    'users',      // Referenced table first
-    'posts',      // Referencing table second
-];
-```
-
-2. **Disable Strict Validation:**
-```php
-public array $validation = [
-    'enabled' => true,
-    'strict_mode' => false,
-];
-```
-
-### Problem: Circular Reference Detected
-```php
-ValidationError: Circular reference detected between tables A and B
-```
-
-**Solution:**
-This is usually by design. Disable the check if intentional:
-```php
-public array $validation = [
-    'rules' => [
-        'circular_references' => false,
-    ]
-];
-```
-
-## Common Error Messages
+## Common Errors
 
 ### "Table 'information_schema.KEY_COLUMN_USAGE' doesn't exist"
 **Cause:** Using MySQL version < 5.0 or permissions issue.
@@ -453,7 +384,7 @@ composer install --no-dev
 cp vendor/daycry/schemas/src/Config/Schemas.php app/Config/
 ```
 
-## Debugging Tips
+## Debug Basics
 
 ### Enable Debug Mode
 ```php
@@ -467,27 +398,9 @@ app.forceGlobalSecureRequests = false
 app.CSRFProtection = false
 ```
 
-### Log Schema Operations
-```php
-public array $logging = [
-    'enabled' => true,
-    'level' => 'debug',
-    'performance_metrics' => true,
-];
-```
+Logging subsystem was removed. Use your framework/app logger around your own calls if needed.
 
-### Manual Error Checking
-```php
-$schemas = new Schemas();
-$schema = $schemas->get();
-
-// Check for errors
-if ($schemas->hasErrors()) {
-    foreach ($schemas->getErrors() as $error) {
-        log_message('error', 'Schema error: ' . $error);
-    }
-}
-```
+Exceptions are thrown unless `silent = true` (then operations fail quietly – prefer `silent = false` while debugging).
 
 ### Database Query Debugging
 ```php
@@ -500,32 +413,11 @@ public bool $DBDebug = true;
 
 ## Best Practices
 
-### Performance Optimization
-1. **Always use caching in production**
-2. **Limit tables with `includedTables` when possible**
-3. **Use Redis cache for better performance**
-4. **Disable unnecessary features**
+## Best Practices
+1. Cache drafted schema (enable cache only after first successful draft).
+2. Limit scope with `includedTables` for very large databases during development.
+3. Keep `silent = false` while integrating; switch to `true` in production if you prefer resilience.
+4. Re-draft only when structural changes occur; otherwise read from cache/file.
+5. Normalize naming in migrations so drafter picks up consistent foreign keys.
 
-### Error Prevention
-1. **Test configurations in development first**
-2. **Use proper error handling with try-catch**
-3. **Monitor memory usage for large databases**
-4. **Set appropriate timeouts**
-
-### Debugging Strategy
-1. **Start with simple configurations**
-2. **Enable logging for troubleshooting**
-3. **Test database connections separately**
-4. **Use CLI for debugging large operations**
-
-### Environment Management
-1. **Use different configs per environment**
-2. **Never cache in development**
-3. **Use environment variables for sensitive data**
-4. **Test schema changes in staging first**
-
-If you encounter issues not covered in this guide, please:
-1. Check the library's GitHub issues
-2. Enable debug logging for more details
-3. Test with minimal configuration
-4. Provide complete error messages when reporting issues
+If something here still references a removed feature, open an issue – the docs should remain minimal.

@@ -1,6 +1,6 @@
-# API Reference - Classes Overview
+# API Reference - Current Core Classes
 
-This document provides a comprehensive overview of all classes in the Daycry Schemas library, their purposes, and main methods.
+This document lists the classes that remain in the trimmed (minimal) core of the Daycry Schemas library. Classes from previously larger feature sets (validation, performance analysis, advanced relation detection, intelligent cache manager, event/hook system, extended logging) have been removed and are intentionally omitted here. Any deprecated stubs (e.g. `SchemaLogger`) are excluded.
 
 ## Core Classes
 
@@ -400,126 +400,10 @@ class CacheArchiver extends BaseArchiver
 }
 ```
 
-## Advanced Feature Classes
+## Removed Advanced Feature Classes
 
-### SchemaValidator
-
-Validates schema integrity and consistency.
-
-```php
-namespace Daycry\Schemas;
-
-class SchemaValidator
-{
-    protected array $config                // Validation configuration
-    protected array $rules                 // Validation rules
-    
-    public function __construct(array $config = [])
-    public function validateSchema(Structures\Schema $schema): ValidationResult
-    public function validateTable(Structures\Table $table): ValidationResult
-    public function addCustomRule(string $name, callable $rule): self
-    protected function detectCircularReferences(Structures\Schema $schema): array
-    protected function validateForeignKeys(Structures\Schema $schema): array
-    protected function validateDataTypes(Structures\Schema $schema): array
-}
-```
-
-### IntelligentCacheManager
-
-Advanced caching with versioning and tags.
-
-```php
-namespace Daycry\Schemas;
-
-class IntelligentCacheManager
-{
-    protected CacheInterface $cache        // Cache instance
-    protected array $metadata = []         // Cache metadata
-    
-    public function __construct(CacheInterface $cache)
-    public function store(string $key, $data, array $tags = [], int $ttl = 3600): bool
-    public function get(string $key): mixed
-    public function invalidate(string $key): bool
-    public function invalidateByTag(string $tag): bool
-    public function getVersion(string $key): ?string
-    public function updateVersion(string $key): bool
-}
-```
-
-### PerformanceAnalyzer
-
-Analyzes schema performance and provides optimization recommendations.
-
-```php
-namespace Daycry\Schemas;
-
-class PerformanceAnalyzer
-{
-    protected array $config                // Analysis configuration
-    protected array $weights               // Scoring weights
-    
-    public function __construct(array $config = [])
-    public function analyzeSchema(Structures\Schema $schema): array
-    public function analyzeTable(Structures\Table $table): array
-    public function analyzeIndexes(Structures\Schema $schema): array
-    public function analyzeForeignKeys(Structures\Schema $schema): array
-    public function calculatePerformanceScore(array $analysis): int
-    public function getRecommendations(array $analysis): array
-}
-```
-
-### AdvancedRelationDetector
-
-Detects complex relationships between tables.
-
-```php
-namespace Daycry\Schemas;
-
-class AdvancedRelationDetector
-{
-    protected array $patterns              // Detection patterns
-    protected array $config                // Configuration
-    
-    public function __construct(array $config = [])
-    public function detectAdvancedRelations(Structures\Schema $schema): array
-    public function detectPolymorphicRelations(Structures\Schema $schema): array
-    public function detectSelfReferencingRelations(Structures\Schema $schema): array
-    public function detectManyToManyRelations(Structures\Schema $schema): array
-    public function detectHierarchicalStructures(Structures\Schema $schema): array
-}
-```
-
-### SchemaLogger
-
-PSR-3 compatible logging with performance metrics.
-
-```php
-namespace Daycry\Schemas;
-
-class SchemaLogger implements LoggerInterface
-{
-    protected LoggerInterface $logger      // PSR-3 logger
-    protected array $metrics = []          // Performance metrics
-    protected array $sessions = []         // Active sessions
-    
-    public function __construct(LoggerInterface $logger)
-    public function logOperationStart(string $operation, array $context = []): string
-    public function logOperationEnd(string $sessionId, bool $success, array $context = []): void
-    public function getMetrics(): array
-    public function resetMetrics(): void
-    
-    // PSR-3 LoggerInterface methods
-    public function emergency($message, array $context = []): void
-    public function alert($message, array $context = []): void
-    public function critical($message, array $context = []): void
-    public function error($message, array $context = []): void
-    public function warning($message, array $context = []): void
-    public function notice($message, array $context = []): void
-    public function info($message, array $context = []): void
-    public function debug($message, array $context = []): void
-    public function log($level, $message, array $context = []): void
-}
-```
+The following previously documented classes have been removed from the codebase and should not be used:
+`SchemaValidator`, `PerformanceAnalyzer`, `AdvancedRelationDetector`, `IntelligentCacheManager`, and any event / hook or extended logging helpers. Applications should implement bespoke logic if such functionality is required.
 
 ## Helper Classes
 
@@ -595,17 +479,19 @@ class Schemas extends BaseConfig
 
 ## Interfaces
 
-### ReaderInterface
+### ReaderInterface (Fluent)
 
-Interface for all readers.
+Interface for all readers. Methods now return the implementing instance (`static`) enabling fluent chaining.
 
 ```php
 namespace Daycry\Schemas\Reader;
 
-interface ReaderInterface extends Countable, IteratorAggregate
+interface ReaderInterface extends \Countable, \IteratorAggregate
 {
-    public function ready(): bool
+    public function ready(): bool;
+    /** @return static */
     public function fetch($tables);
+    /** @return static */
     public function fetchAll();
 }
 ```
@@ -647,15 +533,24 @@ $drafter = DrafterFactory::create('database', $config);
 $archiver = ArchiverFactory::create('file', $config);
 ```
 
-### Fluent Interface
+### Reader Fluent Interface
+
+Reader handler example demonstrating fluent `fetch` / `fetchAll`:
 
 ```php
-// Fluent method chaining
-$table = (new Table('users'))
-    ->addField((new Field('id'))->setType('INT')->setPrimaryKey(true))
-    ->addField((new Field('name'))->setType('VARCHAR')->setLength(255))
-    ->addIndex((new Index('idx_name'))->addField('name'));
+$cacheReader
+    ->fetch(['users'])
+    ->fetch(['posts'])
+    ->fetchAll();
 ```
+
+Structure objects themselves retain basic mutable public properties; any prior dedicated fluent mutator helpers removed from docs for clarity.
+
+### Normalization Highlights
+
+- Field integer flags are cast to booleans upon construction (`primary_key`, `nullable`, `auto_increment`).
+- Foreign key column fields that arrive as arrays are reduced to their first element.
+- Relation inverse table properties fallback to a non‑null string to avoid null propagation.
 
 ### Dependency Injection
 

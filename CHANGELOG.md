@@ -2,160 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and Semantic Versioning.
 
-## [Unreleased]
-
+## [2.0.0] - 2025-09-30 (Minimal Core Refactor)
 ### Added
-- **📚 Complete English Documentation System**
-  - Comprehensive documentation in `docs/` directory
-  - Installation guide, quick-start guide, and API reference
-  - Configuration reference with all options explained
-  - Practical examples and troubleshooting guide
-  - Migration guide for existing users
-
-- **🚀 Enhanced Configuration System**
-  - Structured array-based configuration for better organization
-  - New `cache` configuration array with advanced caching options
-  - New `logging` configuration array with detailed logging control
-  - New `performance` configuration array for analysis and optimization
-  - New `relationships` configuration array for advanced relationship detection
-  - New `validation` configuration array for schema validation
-  - New `advanced` configuration array for experimental features
-
-- **⚡ Advanced Caching Features**
-  - Cache TTL configuration with `$cache['ttl']`
-  - Cache key prefixes and tags for better organization
-  - Cache versioning and compression support
-  - Improved cache handler with fallback mechanisms
-
-- **📊 Performance Analysis System**
-  - Database performance scoring with configurable weights
-  - Optimization recommendations based on analysis
-  - Performance metrics logging
-  - Deep analysis of indexes, foreign keys, and data types
-
-- **🔗 Enhanced Relationship Detection**
-  - Polymorphic relationship detection
-  - Self-referencing table detection
-  - Many-to-many relationship analysis
-  - Hierarchical structure detection
-  - Configurable naming conventions for relationships
-
-- **✅ Schema Validation System**
-  - Comprehensive validation rules
-  - Strict mode for enhanced validation
-  - Auto-fix capabilities for common issues
-  - Custom validation rules support
-
-- **📝 Advanced Logging**
-  - Configurable log levels and channels
-  - Performance metrics logging
-  - Query logging for debugging
-  - Multiple log channel support
-
-- **🔧 Developer Tools**
-  - PHPStan static analysis configuration
-  - Comprehensive test suite with 152+ tests
-  - Integration tests for all new features
-  - Performance and compatibility testing
+- `final` keyword to concrete handlers (Archiver, Drafters, Readers) and structure classes (Field, Index, ForeignKey, Relation, Table, Schema, Procedure, Trigger, View) to reduce accidental extension surface.
+- Minimal configuration excerpt in README.
 
 ### Changed
-- **⚠️ BREAKING:** Removed deprecated `public int $ttl` property
-  - **Migration:** Use `$cache['ttl']` instead of `$ttl`
-  - **Impact:** Direct access to `$config->ttl` will no longer work
-  - **Solution:** Access via `$config->cache['ttl']` or use fallback `$config->cache['ttl'] ?? 3600`
+- Composer dev dependencies pruned: removed `codeigniter4/devkit`, `nexusphp/tachycardia`; added explicit `phpunit/phpunit`.
+- Removed all logging checks from reader handlers; simplified exception handling (silent fail returns empty schema segments).
+- README rewritten to reflect lean feature set and removed subsystems.
 
-- **🔄 Updated CacheHandler Implementation**
-  - Modified to use new `$config->cache['ttl']` configuration
-  - Added fallback to default TTL value (3600 seconds)
-  - Improved error handling and edge cases
-
-- **📈 Enhanced Services Class**
-  - Fixed inheritance from `CodeIgniter\Config\BaseService`
-  - Improved type hints and documentation
-  - Better integration with CodeIgniter's service system
-
-### Fixed
-- **🐛 Configuration Consistency**
-  - Aligned configuration file with documentation
-  - Fixed missing configuration options
-  - Resolved property access issues
-
-- **🔧 Static Analysis Issues**
-  - Fixed PHPStan configuration
-  - Resolved baseline generation issues
-  - Improved code quality and type safety
-
-- **✅ Test Coverage**
-  - Added comprehensive test coverage for new features
-  - Fixed existing test compatibility issues
-  - Improved test organization and structure
+### Removed (Breaking)
+- Async subsystem (jobs, manager, handlers).
+- Plugin system, environment layering, runtime overrides, snapshots.
+- Events subsystem & placeholder tests.
+- Logging & metrics (SchemaLogger) and analyzer/performance components.
+- Validation engine & advanced relation detectors.
+- Export/import formats beyond cache; intelligent cache manager.
+- Legacy tests referencing removed subsystems.
 
 ### Deprecated
-- **⚠️ Legacy Configuration Access**
-  - Direct access to `$config->ttl` is deprecated
-  - Use `$config->cache['ttl']` for new implementations
-  - Legacy access will be removed in future major version
+- None. (Surface aggressively trimmed.)
 
 ### Security
-- **🔒 Enhanced Configuration Validation**
-  - Improved configuration type checking
-  - Better handling of sensitive configuration data
-  - Secure default values for all new options
+- No security-affecting changes.
 
-## Migration Guide
-
-### For Existing Users
-- **No immediate action required** - all existing code continues to work
-- **Recommended:** Review the [Migration Guide](docs/migration.md) for optimization opportunities
-- **Optional:** Gradually adopt new configuration features for enhanced functionality
-
-### Configuration Updates
-```php
-// Before (deprecated but still works)
-public int $ttl = 14400;
-
-// After (recommended)
-public array $cache = [
-    'enabled' => true,
-    'ttl' => 3600,
-    'prefix' => 'schemas_'
-];
-```
-
-### Code Updates
-```php
-// Before (will break)
-$ttl = $config->ttl;
-
-// After (works)
-$ttl = $config->cache['ttl'] ?? 3600;
-```
-
-## Testing
-
-All changes have been thoroughly tested:
-- **152 total tests** passing
-- **449 assertions** validated
-- **Backward compatibility** verified
-- **Performance impact** assessed
-- **Integration testing** completed
-
-## Documentation
-
-Complete documentation is now available:
-- **Installation:** [docs/installation.md](docs/installation.md)
-- **Quick Start:** [docs/quick-start.md](docs/quick-start.md)
-- **Configuration:** [docs/configuration.md](docs/configuration.md)
-- **API Reference:** [docs/api-reference.md](docs/api-reference.md)
-- **Migration Guide:** [docs/migration.md](docs/migration.md)
-- **Examples:** [docs/examples.md](docs/examples.md)
-- **Troubleshooting:** [docs/troubleshooting.md](docs/troubleshooting.md)
+## [1.x] - Legacy Line
+Feature-rich line including async, events, logging, validation, analyzers, relation detectors, multi-environment configuration. No longer maintained; pin to the latest 1.x tag if you depend on those subsystems.
 
 ---
 
-**Full Backward Compatibility Maintained** - Your existing code will continue to work without any changes.
+## Migration Guide 1.x -> 2.0.0
+1. Remove usage of async, events, logging, validation, export/import (non-cache) APIs.
+2. Flatten multi-environment configuration to a single `Schemas` config instance.
+3. If you extended classes now `final`, wrap them with composition rather than inheritance.
+4. Re-implement any removed serialization or event features externally as add‑ons.
 
-**Gradual Migration Supported** - Adopt new features at your own pace without disrupting existing functionality.
+---
+
+[2.0.0]: https://github.com/daycry/schemas/tree/v2.0.0

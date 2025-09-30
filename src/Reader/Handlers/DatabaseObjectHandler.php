@@ -18,13 +18,13 @@ use Daycry\Schemas\Config\Schemas as SchemasConfig;
 use Daycry\Schemas\Reader\BaseReader;
 use Daycry\Schemas\Reader\ReaderInterface;
 use Daycry\Schemas\Structures\Mergeable;
-use Daycry\Schemas\Structures\View;
 use Daycry\Schemas\Structures\Procedure;
 use Daycry\Schemas\Structures\Trigger;
+use Daycry\Schemas\Structures\View;
 
 /**
  * Database Objects Handler
- * 
+ *
  * Reads database views, stored procedures, and triggers
  */
 class DatabaseObjectHandler extends BaseReader implements ReaderInterface
@@ -32,16 +32,14 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
     /**
      * The main database connection.
      *
-     * @var BaseConnection
+     * @var BaseConnection<mixed,mixed>
      */
-    protected $db;
+    protected BaseConnection $db;
 
     /**
      * Database objects container
-     *
-     * @var Mergeable|null
      */
-    protected $objects;
+    protected ?Mergeable $objects;
 
     /**
      * Save the config and set up the database connection
@@ -55,9 +53,9 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
 
         // Use injected database connection, or start a new one with the default group
         $this->db = db_connect($db);
-        
+
         $this->objects = new Mergeable();
-        $this->ready = true;
+        $this->ready   = true;
     }
 
     /**
@@ -71,30 +69,26 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
     /**
      * Fetch specified objects from the database
      *
-     * @param array|string $objects
-     *
-     * @return $this
+     * @param array<int,string>|string $objects
      */
-    public function fetch($objects)
+    public function fetch(array|string $objects): static
     {
-        if (!$this->ensureReady()) {
+        if (! $this->ensureReady()) {
             return $this;
         }
+        $list = is_string($objects) ? [$objects] : $objects;
 
-        if (is_string($objects)) {
-            $objects = [$objects];
-        }
-
-        // Fetch each type of object
-        foreach ($objects as $objectType) {
+        foreach ($list as $objectType) {
             switch (strtolower($objectType)) {
                 case 'views':
                     $this->fetchViews();
                     break;
+
                 case 'procedures':
                 case 'functions':
                     $this->fetchProcedures();
                     break;
+
                 case 'triggers':
                     $this->fetchTriggers();
                     break;
@@ -106,15 +100,12 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
 
     /**
      * Fetch all available database objects
-     *
-     * @return $this
      */
-    public function fetchAll()
+    public function fetchAll(): static
     {
-        if (!$this->ensureReady()) {
+        if (! $this->ensureReady()) {
             return $this;
         }
-
         $this->fetchViews();
         $this->fetchProcedures();
         $this->fetchTriggers();
@@ -128,12 +119,12 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
     protected function fetchViews(): void
     {
         $driver = get_class($this->db);
-        
-        if (strpos($driver, 'MySQLi') !== false) {
+
+        if (str_contains($driver, 'MySQLi')) {
             $this->fetchMySQLViews();
-        } elseif (strpos($driver, 'Postgre') !== false) {
+        } elseif (str_contains($driver, 'Postgre')) {
             $this->fetchPostgreViews();
-        } elseif (strpos($driver, 'SQLite3') !== false) {
+        } elseif (str_contains($driver, 'SQLite3')) {
             $this->fetchSQLiteViews();
         } else {
             // Generic approach
@@ -146,29 +137,31 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     protected function fetchMySQLViews(): void
     {
-        $query = "SELECT 
+        $query = 'SELECT
                     TABLE_NAME as view_name,
                     VIEW_DEFINITION as definition,
                     IS_UPDATABLE as updatable,
                     SECURITY_TYPE as security_type
-                  FROM INFORMATION_SCHEMA.VIEWS 
-                  WHERE TABLE_SCHEMA = DATABASE()";
-
+                  FROM INFORMATION_SCHEMA.VIEWS
+                  WHERE TABLE_SCHEMA = DATABASE()';
         $result = $this->db->query($query);
-        
-        if (!$this->objects->views) {
+        if (! is_object($result) || ! method_exists($result, 'getResultArray')) {
+            return;
+        }
+
+        if (! $this->objects->views) {
             $this->objects->views = new Mergeable();
         }
 
         foreach ($result->getResultArray() as $row) {
-            $view = new View($row['view_name']);
+            $view             = new View($row['view_name']);
             $view->definition = $row['definition'];
-            $view->updatable = strtoupper($row['updatable']) === 'YES';
-            $view->security = $row['security_type'];
-            
+            $view->updatable  = strtoupper($row['updatable']) === 'YES';
+            $view->security   = $row['security_type'];
+
             // Parse dependencies from definition
             $this->parseViewDependencies($view);
-            
+
             $this->objects->views->{$row['view_name']} = $view;
         }
     }
@@ -178,25 +171,27 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     protected function fetchPostgreViews(): void
     {
-        $query = "SELECT 
+        $query = "SELECT
                     viewname as view_name,
                     definition
-                  FROM pg_views 
+                  FROM pg_views
                   WHERE schemaname = 'public'";
-
         $result = $this->db->query($query);
-        
-        if (!$this->objects->views) {
+        if (! is_object($result) || ! method_exists($result, 'getResultArray')) {
+            return;
+        }
+
+        if (! $this->objects->views) {
             $this->objects->views = new Mergeable();
         }
 
         foreach ($result->getResultArray() as $row) {
-            $view = new View($row['view_name']);
+            $view             = new View($row['view_name']);
             $view->definition = $row['definition'];
-            
+
             // Parse dependencies from definition
             $this->parseViewDependencies($view);
-            
+
             $this->objects->views->{$row['view_name']} = $view;
         }
     }
@@ -206,20 +201,23 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     protected function fetchSQLiteViews(): void
     {
-        $query = "SELECT name, sql FROM sqlite_master WHERE type = 'view'";
+        $query  = "SELECT name, sql FROM sqlite_master WHERE type = 'view'";
         $result = $this->db->query($query);
-        
-        if (!$this->objects->views) {
+        if (! is_object($result) || ! method_exists($result, 'getResultArray')) {
+            return;
+        }
+
+        if (! $this->objects->views) {
             $this->objects->views = new Mergeable();
         }
 
         foreach ($result->getResultArray() as $row) {
-            $view = new View($row['name']);
+            $view             = new View($row['name']);
             $view->definition = $row['sql'];
-            
+
             // Parse dependencies from definition
             $this->parseViewDependencies($view);
-            
+
             $this->objects->views->{$row['name']} = $view;
         }
     }
@@ -231,7 +229,7 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
     {
         // Fallback - try to get view information from system tables
         // This is a basic implementation
-        if (!$this->objects->views) {
+        if (! $this->objects->views) {
             $this->objects->views = new Mergeable();
         }
     }
@@ -242,10 +240,10 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
     protected function fetchProcedures(): void
     {
         $driver = get_class($this->db);
-        
-        if (strpos($driver, 'MySQLi') !== false) {
+
+        if (str_contains($driver, 'MySQLi')) {
             $this->fetchMySQLProcedures();
-        } elseif (strpos($driver, 'Postgre') !== false) {
+        } elseif (str_contains($driver, 'Postgre')) {
             $this->fetchPostgreProcedures();
         } else {
             // Generic approach
@@ -258,7 +256,7 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     protected function fetchMySQLProcedures(): void
     {
-        $query = "SELECT 
+        $query = 'SELECT
                     ROUTINE_NAME as name,
                     ROUTINE_TYPE as type,
                     ROUTINE_DEFINITION as definition,
@@ -266,24 +264,26 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
                     SECURITY_TYPE as security,
                     IS_DETERMINISTIC as deterministic,
                     SQL_DATA_ACCESS as data_access
-                  FROM INFORMATION_SCHEMA.ROUTINES 
-                  WHERE ROUTINE_SCHEMA = DATABASE()";
-
+                  FROM INFORMATION_SCHEMA.ROUTINES
+                  WHERE ROUTINE_SCHEMA = DATABASE()';
         $result = $this->db->query($query);
-        
-        if (!$this->objects->procedures) {
+        if (! is_object($result) || ! method_exists($result, 'getResultArray')) {
+            return;
+        }
+
+        if (! $this->objects->procedures) {
             $this->objects->procedures = new Mergeable();
         }
 
         foreach ($result->getResultArray() as $row) {
-            $procedure = new Procedure($row['name']);
-            $procedure->type = $row['type'];
-            $procedure->definition = $row['definition'];
-            $procedure->comment = $row['comment'];
-            $procedure->security = $row['security'];
+            $procedure                = new Procedure($row['name']);
+            $procedure->type          = $row['type'];
+            $procedure->definition    = $row['definition'];
+            $procedure->comment       = $row['comment'];
+            $procedure->security      = $row['security'];
             $procedure->deterministic = $row['deterministic'] === 'YES';
-            $procedure->dataAccess = $row['data_access'];
-            
+            $procedure->dataAccess    = $row['data_access'];
+
             $this->objects->procedures->{$row['name']} = $procedure;
         }
     }
@@ -293,7 +293,7 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     protected function fetchPostgreProcedures(): void
     {
-        $query = "SELECT 
+        $query = "SELECT
                     proname as name,
                     CASE WHEN prokind = 'f' THEN 'FUNCTION' ELSE 'PROCEDURE' END as type,
                     prosrc as definition,
@@ -301,19 +301,21 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
                   FROM pg_proc p
                   JOIN pg_namespace n ON p.pronamespace = n.oid
                   WHERE n.nspname = 'public'";
-
         $result = $this->db->query($query);
-        
-        if (!$this->objects->procedures) {
+        if (! is_object($result) || ! method_exists($result, 'getResultArray')) {
+            return;
+        }
+
+        if (! $this->objects->procedures) {
             $this->objects->procedures = new Mergeable();
         }
 
         foreach ($result->getResultArray() as $row) {
-            $procedure = new Procedure($row['name']);
-            $procedure->type = $row['type'];
+            $procedure             = new Procedure($row['name']);
+            $procedure->type       = $row['type'];
             $procedure->definition = $row['definition'];
-            $procedure->language = $row['language'];
-            
+            $procedure->language   = $row['language'];
+
             $this->objects->procedures->{$row['name']} = $procedure;
         }
     }
@@ -323,7 +325,7 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     protected function fetchGenericProcedures(): void
     {
-        if (!$this->objects->procedures) {
+        if (! $this->objects->procedures) {
             $this->objects->procedures = new Mergeable();
         }
     }
@@ -334,12 +336,12 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
     protected function fetchTriggers(): void
     {
         $driver = get_class($this->db);
-        
-        if (strpos($driver, 'MySQLi') !== false) {
+
+        if (str_contains($driver, 'MySQLi')) {
             $this->fetchMySQLTriggers();
-        } elseif (strpos($driver, 'Postgre') !== false) {
+        } elseif (str_contains($driver, 'Postgre')) {
             $this->fetchPostgreTriggers();
-        } elseif (strpos($driver, 'SQLite3') !== false) {
+        } elseif (str_contains($driver, 'SQLite3')) {
             $this->fetchSQLiteTriggers();
         } else {
             $this->fetchGenericTriggers();
@@ -351,28 +353,30 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     protected function fetchMySQLTriggers(): void
     {
-        $query = "SELECT 
+        $query = 'SELECT
                     TRIGGER_NAME as name,
                     EVENT_OBJECT_TABLE as table_name,
                     ACTION_TIMING as timing,
                     EVENT_MANIPULATION as event,
                     ACTION_STATEMENT as definition
-                  FROM INFORMATION_SCHEMA.TRIGGERS 
-                  WHERE TRIGGER_SCHEMA = DATABASE()";
-
+                  FROM INFORMATION_SCHEMA.TRIGGERS
+                  WHERE TRIGGER_SCHEMA = DATABASE()';
         $result = $this->db->query($query);
-        
-        if (!$this->objects->triggers) {
+        if (! is_object($result) || ! method_exists($result, 'getResultArray')) {
+            return;
+        }
+
+        if (! $this->objects->triggers) {
             $this->objects->triggers = new Mergeable();
         }
 
         foreach ($result->getResultArray() as $row) {
-            $trigger = new Trigger($row['name']);
-            $trigger->table = $row['table_name'];
-            $trigger->timing = $row['timing'];
-            $trigger->events = [$row['event']];
+            $trigger             = new Trigger($row['name']);
+            $trigger->table      = $row['table_name'];
+            $trigger->timing     = $row['timing'];
+            $trigger->events     = [$row['event']];
             $trigger->definition = $row['definition'];
-            
+
             $this->objects->triggers->{$row['name']} = $trigger;
         }
     }
@@ -382,7 +386,7 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     protected function fetchPostgreTriggers(): void
     {
-        $query = "SELECT 
+        $query = "SELECT
                     t.tgname as name,
                     c.relname as table_name,
                     CASE t.tgtype & 66
@@ -395,19 +399,21 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
                   JOIN pg_class c ON t.tgrelid = c.oid
                   JOIN pg_namespace n ON c.relnamespace = n.oid
                   WHERE NOT t.tgisinternal AND n.nspname = 'public'";
-
         $result = $this->db->query($query);
-        
-        if (!$this->objects->triggers) {
+        if (! is_object($result) || ! method_exists($result, 'getResultArray')) {
+            return;
+        }
+
+        if (! $this->objects->triggers) {
             $this->objects->triggers = new Mergeable();
         }
 
         foreach ($result->getResultArray() as $row) {
-            $trigger = new Trigger($row['name']);
-            $trigger->table = $row['table_name'];
-            $trigger->timing = $row['timing'];
+            $trigger             = new Trigger($row['name']);
+            $trigger->table      = $row['table_name'];
+            $trigger->timing     = $row['timing'];
             $trigger->definition = $row['definition'];
-            
+
             $this->objects->triggers->{$row['name']} = $trigger;
         }
     }
@@ -417,18 +423,21 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     protected function fetchSQLiteTriggers(): void
     {
-        $query = "SELECT name, tbl_name as table_name, sql FROM sqlite_master WHERE type = 'trigger'";
+        $query  = "SELECT name, tbl_name as table_name, sql FROM sqlite_master WHERE type = 'trigger'";
         $result = $this->db->query($query);
-        
-        if (!$this->objects->triggers) {
+        if (! is_object($result) || ! method_exists($result, 'getResultArray')) {
+            return;
+        }
+
+        if (! $this->objects->triggers) {
             $this->objects->triggers = new Mergeable();
         }
 
         foreach ($result->getResultArray() as $row) {
-            $trigger = new Trigger($row['name']);
-            $trigger->table = $row['table_name'];
+            $trigger             = new Trigger($row['name']);
+            $trigger->table      = $row['table_name'];
             $trigger->definition = $row['sql'];
-            
+
             $this->objects->triggers->{$row['name']} = $trigger;
         }
     }
@@ -438,7 +447,7 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     protected function fetchGenericTriggers(): void
     {
-        if (!$this->objects->triggers) {
+        if (! $this->objects->triggers) {
             $this->objects->triggers = new Mergeable();
         }
     }
@@ -448,19 +457,19 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     protected function parseViewDependencies(View $view): void
     {
-        if (!$view->definition) {
+        if (! $view->definition) {
             return;
         }
 
         // Simple regex to find table references in SELECT statements
         // This is a basic implementation and could be improved
         preg_match_all('/FROM\s+([a-zA-Z_][a-zA-Z0-9_]*)/i', $view->definition, $matches);
-        if (!empty($matches[1])) {
+        if (! empty($matches[1])) {
             $view->dependencies = array_unique($matches[1]);
         }
 
         preg_match_all('/JOIN\s+([a-zA-Z_][a-zA-Z0-9_]*)/i', $view->definition, $matches);
-        if (!empty($matches[1])) {
+        if (! empty($matches[1])) {
             $view->dependencies = array_unique(array_merge($view->dependencies, $matches[1]));
         }
     }
@@ -493,17 +502,23 @@ class DatabaseObjectHandler extends BaseReader implements ReaderInterface
      */
     public function getIterator(): Mergeable
     {
-        return $this->fetchAll()->objects;
+        if ($this->objects === null) {
+            $this->objects = new Mergeable();
+        }
+        $this->fetchAll();
+
+        return $this->objects;
     }
 
     /**
      * Magic getter for accessing objects
      */
-    public function __get(string $name)
+    public function __get(string $name): mixed
     {
         if ($this->objects && property_exists($this->objects, $name)) {
             return $this->objects->{$name};
         }
+
         return null;
     }
 

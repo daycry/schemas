@@ -18,68 +18,68 @@ use RuntimeException;
 
 class SchemasException extends RuntimeException implements ExceptionInterface
 {
-    public static function forMissingField($class, $field)
+    public static function forMissingField(string $class, string $field): self
     {
-        return new static(lang('Schemas.missingField', [$class, $field]));
+        return new self(lang('Schemas.missingField', [$class, $field]));
     }
 
-    public static function forUnsupportedHandler($class)
+    public static function forUnsupportedHandler(string $class): self
     {
-        return new static(lang('Schemas.unsupportedHandler', [$class]));
+        return new self(lang('Schemas.unsupportedHandler', [$class]));
     }
 
-    public static function forMethodNotImplemented($class, $method)
+    public static function forMethodNotImplemented(string $class, string $method): self
     {
-        return new static(lang('Schemas.methodNotImplemented', [$class, $method]));
+        return new self(lang('Schemas.methodNotImplemented', [$class, $method]));
     }
 
-    public static function forNoSchema()
+    public static function forNoSchema(): self
     {
-        return new static(lang('Schemas.noSchema'));
+        return new self(lang('Schemas.noSchema'));
     }
 
-    public static function forReaderNotReady()
+    public static function forReaderNotReady(): self
     {
-        return new static(lang('Schemas.readerNotReady'));
+        return new self(lang('Schemas.readerNotReady'));
     }
 
-    public static function forInvalidPluginConfiguration(string $pluginName)
+    public static function forInvalidPluginConfiguration(string $pluginName): self
     {
-        return new static("Invalid configuration for plugin '{$pluginName}'");
+        return new self("Invalid configuration for plugin '{$pluginName}'");
     }
 
-    public static function forMissingPlugin(string $pluginName)
+    public static function forMissingPlugin(string $pluginName): self
     {
-        return new static("Plugin '{$pluginName}' not found");
+        return new self("Plugin '{$pluginName}' not found");
     }
 
-    public static function forPluginDependencyNotMet(string $pluginName, string $dependency)
+    public static function forPluginDependencyNotMet(string $pluginName, string $dependency): self
     {
-        return new static("Plugin '{$pluginName}' requires dependency '{$dependency}'");
+        return new self("Plugin '{$pluginName}' requires dependency '{$dependency}'");
     }
 
-    public static function forIncompatiblePlugin(string $pluginName, string $version)
+    public static function forIncompatiblePlugin(string $pluginName, string $version): self
     {
-        return new static("Plugin '{$pluginName}' is not compatible with Schemas version '{$version}'");
+        return new self("Plugin '{$pluginName}' is not compatible with Schemas version '{$version}'");
     }
 
-    public static function forPluginAlreadyRegistered(string $pluginName)
+    public static function forPluginAlreadyRegistered(string $pluginName): self
     {
-        return new static("Plugin '{$pluginName}' is already registered");
+        return new self("Plugin '{$pluginName}' is already registered");
     }
 
-    public static function forMissingSchema()
+    public static function forMissingSchema(): self
     {
-        return new static('No schema available for archiving');
+        return new self('No schema available for archiving');
     }
 
-    public static function forMissingArchiveHandler(string $mode)
+    public static function forMissingArchiveHandler(string $mode): self
     {
-        return new static("Archive handler for mode '{$mode}' not found");
+        return new self("Archive handler for mode '{$mode}' not found");
     }
 
-    public static function forMissingReadHandler(string $extension)
+    public static function forMissingReadHandler(string $extension): self
     {
-        return new static("Read handler for extension '{$extension}' not found");
+        return new self("Read handler for extension '{$extension}' not found");
     }
 }

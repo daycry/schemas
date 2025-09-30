@@ -16,6 +16,9 @@ namespace Daycry\Schemas\Reader;
 use Countable;
 use IteratorAggregate;
 
+/**
+ * @extends IteratorAggregate<string,mixed>
+ */
 interface ReaderInterface extends Countable, IteratorAggregate
 {
     /**
@@ -26,12 +29,12 @@ interface ReaderInterface extends Countable, IteratorAggregate
     /**
      * Fetch specified tables into the scaffold
      *
-     * @param array|string $tables
+     * @param list<string>|string $tables
      */
-    public function fetch($tables);
+    public function fetch(array|string $tables): static;
 
     /**
      * Fetch all available tables into the scaffold
      */
-    public function fetchAll();
+    public function fetchAll(): static;
 }

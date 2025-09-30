@@ -19,6 +19,11 @@ use Countable;
 use IteratorAggregate;
 use Traversable;
 
+/**
+ * Dynamic merge container.
+ *
+ * @implements IteratorAggregate<int|string, mixed>
+ */
 #[AllowDynamicProperties]
 class Mergeable implements Countable, IteratorAggregate
 {
@@ -38,14 +43,9 @@ class Mergeable implements Countable, IteratorAggregate
                 $this->{$key}->merge($item);
             } elseif (is_array($item) && is_array($this->{$key})) {
                 $this->{$key} = array_merge($this->{$key}, $item);
-            } elseif (is_iterable($item) && is_iterable($this->{$key})) {
-                foreach ($item as $mykey => $value) {
-                    if ($item instanceof Mergeable && $this->{$key} instanceof Mergeable) {
-                        $this->{$key}->merge($item);
-                    } else {
-                        $this->{$key}->{$mykey} = $value;
-                    }
-                }
+            } elseif ($item instanceof Mergeable && $this->{$key} instanceof Mergeable) {
+                // Nested mergeables handled above but keep branch explicit
+                $this->{$key}->merge($item);
             } else {
                 $this->{$key} = $item;
             }
@@ -95,8 +95,11 @@ class Mergeable implements Countable, IteratorAggregate
      *
      * @return ArrayIterator
      */
+    /**
+     * @return Traversable<int|string, mixed>
+     */
     public function getIterator(): Traversable
     {
-        return new ArrayIterator($this); // @phpstan-ignore-line
+        return new ArrayIterator(get_object_vars($this));
     }
 }

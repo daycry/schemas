@@ -15,75 +15,27 @@ namespace Daycry\Schemas\Structures;
 
 /**
  * Database Trigger Structure
- * 
+ *
  * Represents a database trigger
  */
-class Trigger extends Mergeable
+final class Trigger extends Mergeable
 {
-    /**
-     * The trigger name
-     *
-     * @var ?string
-     */
-    public $name;
+    public ?string $name   = null;
+    public ?string $table  = null;
+    public ?string $timing = null;
 
     /**
-     * The table this trigger is attached to
-     *
-     * @var ?string
+     * @var list<string>
      */
-    public $table;
+    public array $events = [];
 
-    /**
-     * When the trigger fires (BEFORE, AFTER, INSTEAD OF)
-     *
-     * @var ?string
-     */
-    public $timing;
+    public ?string $definition = null;
+    public ?int $order         = null;
+    public ?string $condition  = null;
+    public bool $enabled       = true;
+    public ?string $comment    = null;
 
-    /**
-     * The events that fire the trigger (INSERT, UPDATE, DELETE)
-     *
-     * @var array<string>
-     */
-    public $events = [];
-
-    /**
-     * The trigger definition/SQL
-     *
-     * @var ?string
-     */
-    public $definition;
-
-    /**
-     * Trigger order/position
-     *
-     * @var ?int
-     */
-    public $order = null;
-
-    /**
-     * Condition for firing (WHEN clause)
-     *
-     * @var ?string
-     */
-    public $condition = null;
-
-    /**
-     * Whether the trigger is enabled
-     *
-     * @var bool
-     */
-    public $enabled = true;
-
-    /**
-     * Comment/description
-     *
-     * @var ?string
-     */
-    public $comment = null;
-
-    public function __construct($name = null)
+    public function __construct(?string $name = null)
     {
         $this->name = $name;
     }

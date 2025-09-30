@@ -34,7 +34,7 @@ class Schemas extends BaseCommand
     public function run(array $params)
     {
         // Always use a clean library with automation disabled
-        /** @var object $config */
+        /** @var \Daycry\Schemas\Config\Schemas $config */
         $config           = config('Schemas');
         $config->automate = [
             'draft'   => false,
@@ -44,19 +44,21 @@ class Schemas extends BaseCommand
         $schemas = new SchemaLibrary($config, null);
 
         // Determine draft handlers
-        if ($drafters = $params['draft'] ?? CLI::getOption('draft')) {
-            $drafters = explode(',', $drafters);
+        $draftOption = $params['draft'] ?? CLI::getOption('draft');
+        if (is_string($draftOption) && $draftOption !== '') {
+            $drafters = explode(',', $draftOption);
         } else {
             $drafters = array_keys($config->draftHandlers);
         }
 
         // Determine archive handlers
-        if ($params['-print'] ?? CLI::getOption('print')) {
+        if (($params['-print'] ?? CLI::getOption('print')) === true) {
             $archivers = CliHandler::class;
-        } elseif ($archivers = $params['-archive'] ?? CLI::getOption('archive')) {
-            $archivers = explode(',', $archivers);
         } else {
-            $archivers = array_keys($config->archiveHandlers);
+            $archiveOption = $params['-archive'] ?? CLI::getOption('archive');
+            $archivers     = (is_string($archiveOption) && $archiveOption !== '')
+                ? explode(',', $archiveOption)
+                : array_keys($config->archiveHandlers);
         }
 
         // Try the draft
@@ -74,7 +76,7 @@ class Schemas extends BaseCommand
             } elseif (is_array($archivers)) {
                 // Multiple archivers - use the first one or default
                 $archiveMode = $archivers[0] ?? 'cache';
-                $result = $schemas->archive($archiveMode);
+                $result      = $schemas->archive($archiveMode);
             } else {
                 $result = $schemas->archive('cache');
             }

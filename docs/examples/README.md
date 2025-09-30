@@ -38,34 +38,24 @@ This directory contains comprehensive examples and step-by-step tutorials for us
 ### 1. Basic Schema Reading
 ```php
 use Daycry\Schemas\Schemas;
-
-$schemas = new Schemas();
-$schema = $schemas->get();
-
 echo "Database has " . count($schema->tables) . " tables";
+ - [**basic-usage.md**](basic-usage.md) - Fundamental operations and simple use cases
+ - [**cache-reader.md**](cache-reader.md) - Loading tables from a cache archive
+ - [**database-drafter.md**](database-drafter.md) - Drafting from a live database
+ - [**archiver-usage.md**](archiver-usage.md) - Persisting and restoring schemas
+ - [**fluent-reader.md**](fluent-reader.md) - Chaining reader fetch calls
 ```
 
-### 2. Performance Analysis
-```php
-use Daycry\Schemas\Schemas;
-
+ - custom-handlers.md (only if you implement custom logic; not part of minimal core)
 $config = config('Schemas');
-$config->enablePerformanceAnalysis = true;
 
-$schemas = new Schemas($config);
-$schema = $schemas->get();
-
+ Legacy scenario files referencing removed subsystems were pruned; create focused examples using current handlers only.
 $analyzer = new \Daycry\Schemas\PerformanceAnalyzer();
-$analysis = $analyzer->analyzeSchema($schema);
-
-echo "Performance Score: " . $analysis['overall_score'];
 ```
+ Primary target remains CodeIgniter 4. External framework adapter examples were removed to reduce maintenance.
 
-### 3. Schema Validation
-```php
-use Daycry\Schemas\Schemas;
-use Daycry\Schemas\SchemaValidator;
 
+ High-level domain tutorials removed. Focus on composing small targeted examples locally.
 $schemas = new Schemas();
 $schema = $schemas->get();
 
@@ -96,6 +86,7 @@ $schema = $schemas->get(); // Second call - loads from cache
 ```php
 use Daycry\Schemas\Schemas;
 
+ Compose your own examples focusing on custom drafting filters, archiving strategies, or framework-specific bootstrapping as needed.
 $config = config('Schemas');
 $config->ignoredTables = ['migrations', 'cache'];
 $config->enableRelationDetection = true;

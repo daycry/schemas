@@ -19,17 +19,15 @@ abstract class BaseHandler
 {
     /**
      * The configuration instance.
-     *
-     * @var SchemasConfig
      */
-    protected $config;
+    protected SchemasConfig $config;
 
     /**
      * Array of error messages assigned on failure.
      *
-     * @var array
+     * @var list<string>
      */
-    protected $errors = [];
+    protected array $errors = [];
 
     /**
      * Saves or loads the config.

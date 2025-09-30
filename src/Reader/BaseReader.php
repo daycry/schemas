@@ -25,19 +25,15 @@ abstract class BaseReader extends BaseHandler
 {
     /**
      * Whether the reader is in a state to be used
-     *
-     * @var bool
      */
-    protected $ready = false;
+    protected bool $ready = false;
 
     /**
      * The currently loaded schema.
      * Could be static but since Reader is usually called by
      * the service we'll try it like this.
-     *
-     * @var string
      */
-    protected $schema;
+    protected string $schema = '';
 
     /**
      * Indicate whether the reader is in a state to be used
@@ -66,18 +62,22 @@ abstract class BaseReader extends BaseHandler
     }
 
     /**
-     * Dummy implementation for classes that cannot lazy load
+     * Dummy implementation for classes that cannot lazy load.
      *
-     * @param array|string $tables
+     * @param array<int,string>|string $tables
      */
-    public function fetch($tables)
+    public function fetch(array|string $tables): static
     {
+        // No-op default for base; concrete readers may override.
+        return $this;
     }
 
     /**
      * Dummy implementation for classes that only bulk load
      */
-    public function fetchAll()
+    public function fetchAll(): static
     {
+        // No-op default for base; concrete readers may override.
+        return $this;
     }
 }

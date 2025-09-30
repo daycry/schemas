@@ -1,4 +1,4 @@
-# Schemas for CodeIgniter 4
+# Schemas (Minimal Core) for CodeIgniter 4
 
 [![Build status](https://github.com/daycry/schemas/actions/workflows/php.yml/badge.svg?branch=master)](https://github.com/daycry/schemas/actions/workflows/php.yml)
 [![Coverage Status](https://coveralls.io/repos/github/daycry/schemas/badge.svg?branch=master)](https://coveralls.io/github/daycry/schemas?branch=master)
@@ -7,188 +7,195 @@
 [![GitHub stars](https://img.shields.io/github/stars/daycry/schemas)](https://packagist.org/packages/daycry/schemas)
 [![GitHub license](https://img.shields.io/github/license/daycry/schemas)](https://github.com/daycry/schemas/blob/master/LICENSE)
 
-> **🚀 Recently Updated:** The library has been modernized with enhanced configuration, comprehensive documentation, and new features while maintaining full backward compatibility.
+> Minimal core edition: focused only on drafting (database / model / directory), reading, and archiving (cache). Async, plugins, events, layered environments, complex validation, advanced relation flags, and export/import formats were removed for a lean runtime.
 
 ## Quick Start
 
-1. Install with Composer: `> composer require daycry/schemas`
-2. Generate a new schema: `> php spark schemas`
+1. Install with Composer:
+   `composer require daycry/schemas`
+2. Generate and cache a schema (database + models) via spark:
+   `php spark schemas -draft database,model -archive cache`
+3. Fetch it in your code:
+   ```php
+   $schema = service('schemas')->get();
+   ```
 
-## 📚 Documentation
+## Core Feature Summary
 
-- **[Complete Documentation](docs/README.md)** - Comprehensive guide to all features
-- **[Installation Guide](docs/installation.md)** - Detailed installation instructions
-- **[Quick Start Guide](docs/quick-start.md)** - Get up and running quickly
-- **[Configuration Reference](docs/configuration.md)** - All configuration options explained
-- **[API Reference](docs/api-reference.md)** - Complete API documentation
-- **[Migration Guide](docs/migration.md)** - Upgrading from older versions
-- **[Examples](docs/examples.md)** - Practical usage examples
-- **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
+* Database structure introspection (tables, fields, indexes, foreign keys)
+* Draft sources: database, models, directory (user-provided PHP schema files)
+* Archive + read from cache (file/redis/etc via CI4 cache handlers)
+* Lightweight structure objects: Schema, Table, Field, Index, ForeignKey, Relation
+* Simple automation flags (draft / archive / read)
+* Explicit, extensible handler lists (swap or extend by config)
 
-## ✨ Features
+## Removed Legacy Subsystems
 
-* **Database Mapping**: View your entire database mapped out in a cascading structure
-* **Schema Analysis**: Get helpful advice on optimizations to your database structure¹
-* **Backup & Restore**: Backup, restore, or deploy an entire database structure between servers or environments¹
-* **Migration Generation**: Generate CodeIgniter 4 migration files from an existing database¹
-* **Format Support**: Transfer projects to CodeIgniter 4 by reading schema files from other supported formats¹
-* **🆕 Streamlined Caching**: Simple, efficient cache control with TTL and prefixes
-* **🆕 Relationship Detection**: Polymorphic and many-to-many relationship detection
-* **🆕 Schema Validation**: Basic validation with configurable strict mode
-* **🆕 Async Processing**: Background processing for large schema operations
-* **🆕 Plugin System**: Extensible architecture with event-driven plugins
+| Removed Feature | Why | Replacement / Path |
+|-----------------|-----|--------------------|
+| Async background drafting | Complexity > benefit | Run synchronously (fast) |
+| Plugin manager | Indirection overhead | Create small wrapper packages |
+| Event bus | Rare real use | Add domain events externally if needed |
+| Export/Import (json/php/yaml) | Serialization bloat | Future addon (see Extensions) |
+| Snapshot/runtime overrides | Hidden mutable state | Explicit service instances |
+| Layered environment profiles | Hard to reason | Single flat config class |
+| Validation engine | Redundant vs tests | Rely on types + PHPUnit |
+| Logging / metrics collector | Unnecessary core weight | Use app/logger directly |
+| Advanced relation flags | Too many toggles | Single boolean `$relationships` |
 
-¹ *Some features are still in development. See **Handlers > Development** for planned future expansion.*
-
-## 🚀 Latest Version - Simplified & Optimized
-
-### Streamlined Configuration System
-```php
-// Simplified, focused configuration
-public array $cache = [
-    'enabled' => false,
-    'handler' => 'file',
-    'ttl' => 3600,
-    'prefix' => 'schemas_'
-];
-
-public array $logging = [
-    'enabled' => false,
-    'level' => 'info'
-];
-
-public array $relationships = [
-    'enabled' => true,
-    'detect_polymorphic' => true,
-    'detect_many_to_many' => true
-];
-
-public array $async = [
-    'enabled' => false,
-    'max_concurrent_jobs' => 3,
-    'job_timeout' => 300
-];
-```
-
-### Backward Compatibility
-- ✅ **All existing code continues to work**
-- ✅ **No breaking changes** (except deprecated `$ttl` property)
-- ✅ **Gradual migration** - upgrade features as needed
+If you relied on something removed, create a thin external package that composes over this core.
 
 ## Installation
 
-Install easily via Composer to take advantage of CodeIgniter 4's autoloading capabilities
-and always be up-to-date:
-* `> composer require daycry/schemas`
+Composer (recommended):
 
-Or, install manually by downloading the source files and adding the directory to
-`app/Config/Autoload.php`.
+```
+composer require daycry/schemas
+```
+
+Manual: clone/download and add the `src` namespace to your `app/Config/Autoload.php`.
 
 ## Configuration
 
-The library comes with a modern, structured configuration system. Copy the configuration template:
-**examples/Schemas.php** to **app/Config/** and customize as needed.
+Publish (optional) configuration to your app (if a publisher command is present) or copy the distributed template to `app/Config/Schemas.php`.
 
-### Basic Configuration
+Key options (see `src/Config/Schemas.php`):
+
 ```php
-public bool $silent = false;           // Control output verbosity
-
-public array $automate = [
-    'draft'   => true,                 // Auto-draft when schema missing
-    'archive' => true,                 // Auto-archive generated schemas
-    'read'    => true,                 // Auto-read from archives
+public string $defaultGroup = 'default';        // Database group
+public array  $ignoredTables = ['migrations'];  // Skip these tables
+public array  $includedTables = [];             // If non-empty: only these tables
+public string $tablePrefix = '';                // Add/remove prefix handling
+public bool   $silent = true;                   // Best-effort mode
+public array  $cache = [                        // Archive/read cache config
+    'enabled' => false,
+    'handler' => 'file',
+    'ttl'     => 3600,
+    'prefix'  => 'schemas_',
+];
+public bool $relationships = true;              // Auto relation detection
+public array $automate = [                      // Auto actions when needed
+    'draft' => true,
+    'archive' => true,
+    'read' => true,
+];
+public array $draftHandlers = [                 // Order-sensitive
+    'database'  => DatabaseHandler::class,
+    'model'     => ModelHandler::class,
+    'directory' => DirectoryHandler::class,
+];
+public array $archiveHandlers = [               // Archive modes
+    'cache' => CacheHandler::class,
+];
+public array $readHandlers = [                  // Reader sources
+    'cache'     => \Daycry\Schemas\Reader\Handlers\CacheHandler::class,
+    'directory' => \Daycry\Schemas\Reader\Handlers\DirectoryHandler::class,
+    'php'       => \Daycry\Schemas\Reader\Handlers\PhpHandler::class,
+    'json'      => \Daycry\Schemas\Reader\Handlers\JsonHandler::class,
 ];
 ```
 
-### Advanced Features
-```php
-public array $cache = [
-    'enabled' => false,               // Enable schema caching
-    'ttl' => 3600,                   // Cache lifetime in seconds
-    'prefix' => 'schemas_'            // Cache key prefix
-];
+Edit handler lists to extend or swap implementations.
 
-public array $async = [
-    'enabled' => false,               // Enable async processing
-    'max_concurrent_jobs' => 3,       // Maximum concurrent jobs
-    'job_timeout' => 300              // Job timeout in seconds
-];
+## Public API Surface
 
-public array $plugins = [
-    'enabled' => true,                // Enable plugin system
-    'auto_discovery' => true,         // Auto-discover plugins
-    'discovery_paths' => [            // Plugin discovery paths
-        APPPATH . 'Plugins/Schemas'
-    ]
-];
-```
+The intent is a small, explicit contract. Everything not listed here should be considered internal and subject to change between minor versions.
 
-📖 **[Complete Configuration Guide](docs/configuration.md)** - See all available options and detailed explanations.
+### Service: `Daycry\Schemas\Schemas`
 
-🔄 **[Migration Guide](docs/migration.md)** - Upgrading from older versions with full backward compatibility.
+Workflow (chainable) methods:
+* `draft(array|string|null $handlers = null): self` – Merge drafted structures from one or more handler keys or class names. Null = all configured draft handlers in order.
+* `archive(string|array $mode = 'cache'): self` – Persist the current schema using configured archive handler(s) for a mode, or pass an array of archiver instances.
+* `read(string|array $path): self` – Load schema data from cache/directory/php/json sources and merge.
+
+State helpers:
+* `get(): ?Schema` – Current in-memory schema (or `null`).
+* `setSchema(Schema $schema): self` – Replace current schema.
+* `reset(): self` – Clear schema & errors.
+* `getErrors(): string[]` – Retrieve & clear collected errors.
+
+### Structures (`Daycry\Schemas\Structures`)
+Plain data objects (all final except `Mergeable` base):
+* `Schema`, `Table`, `Field`, `Index`, `ForeignKey`, `Relation`, plus additional DB objects if present (e.g., Procedure, Trigger, View).
+
+### Draft Handlers (`Daycry\Schemas\Drafter\Handlers`)
+* `DatabaseHandler` – Introspects DB schema via configured database group.
+* `ModelHandler` – Parses application Models for table/field hints.
+* `DirectoryHandler` (+ sub-handlers like `DirectoryHandlers\PhpHandler`) – Loads user-provided schema PHP files.
+
+### Archive Handlers (`Daycry\Schemas\Archiver\Handlers`)
+* `CacheHandler` – Stores schema in CodeIgniter Cache.
+
+### Reader Handlers (`Daycry\Schemas\Reader\Handlers`)
+* `CacheHandler`, `DirectoryHandler`, `PhpHandler`, `JsonHandler` – Rehydrate schema from respective sources.
+
+### Extensibility Points
+* Add a new draft handler: implement `DrafterInterface`, register in `$draftHandlers`.
+* Add an archive handler: implement `ArchiverInterface`, add to `$archiveHandlers` list or new mode key.
+* Add a reader: implement `ReaderInterface`, map extension/key in `$readHandlers`.
+* Provide custom static schema slices: place PHP schema files in your configured `schemasDirectory`.
 
 ## Usage
 
-**Schemas** has four main functions, each with a variety of handlers available:
-* *Draft*: Generates a new schema from a variety of sources
-* *Archive*: Stores a copy of a schema for later use
-* *Read*: Loads a schema for live access
-* *Publish*: (not yet available) Modifies environments to match schema specs
+Basic automated workflow (all automate flags true):
 
-The **Schemas** service is also available to simplify a workflow with convenient wrapper functions.
-At its most basic (with automation enabled), the service will draft, archive, and return
-a schema with one simple command:
-
-	$schema = service('schemas')->get();
-
-You may want to control when portions of the workflow take place to optimize performance.
-Here is an example of one common process, mapping the default database group and storing
-the resulting schema to the cache:
-
-```
-// Map the database and store the schema in cache
+```php
 $schemas = service('schemas');
-$schemas->draft('database')->archive('cache');
-
-// Load the schema from cache, add Model data, and get the updated schema
-$schema = $schemas->read('cache')->draft('model')->get();
+$schema = $schemas->get(); // Will auto draft/read/archive on first call depending on flags
 ```
 
-If you need to deviate from default handler configurations you can inject the handlers yourself:
+Manual workflow control:
+
+```php
+$schemas = service('schemas');
+
+// Draft database + models then archive
+$schemas->draft(['database','model'])->archive();
+
+// Later, read from cache, add directory schemas, and fetch
+$schema = $schemas->read('cache')->draft('directory')->get();
 ```
-$db = db_connect('alternate_database');
-$databaseHandler = new \Tatter\Schemas\Drafter\Handlers\DatabaseHandler(null, $db);
-$schema = $schemas->draft($databaseHandler)->get();
+
+Custom handler instance:
+
+```php
+$db = db_connect('alternate');
+$schemas = service('schemas');
+$databaseHandler = new \Daycry\Schemas\Drafter\Handlers\DatabaseHandler(config('Schemas'), $db);
+$schema = $schemas->draft([$databaseHandler])->get();
 ```
 
 ## Command
 
-**Schemas** comes with a `spark` command for convenient schema generation and display:
+Spark command to draft & archive or print schemas:
 
-	`schemas [-draft handler1,handler2,...] [-archive handler1,... | -print]`
+```
+php spark schemas -draft database,model -archive cache
+php spark schemas -draft database,model,directory -print
+```
 
-Use the command to test and troubleshoot, or add it to your cron for periodic schema caching:
-
-	php spark schemas -draft database,model -archive cache
+Flags:
+* `-draft handler1,handler2` (optional; default = all configured)
+* `-archive cache` (or omit to skip archiving)
+* `-print` output current schema to console (bypasses archive)
 
 ## Automation
 
-By default automation is turned on, but this can be configured via the `$automate` toggles
-in your config file. Automation will allow the service to fall back on a Reader, or even on
-a Drafter should it fail to have a schema already loaded. While automation makes using the
-library very easy, it can come at a performance cost if your application is not configured
-correctly, since it may draft a schema on every page load. Use automation to help but don't
-let it become a crutch.
+`$automate` is evaluated when calling `get()` if no schema exists yet:
+* `draft`: run all draft handlers (or configured subset) to build schema
+* `archive`: persist after drafting
+* `read`: attempt to read before drafting
+
+Disable any flag for explicit control in performance‑critical flows.
 
 ## Structure
 
-**Schemas** uses foreign keys, indexes, and naming convention to detect relationships
+Schemas uses foreign keys, indexes, and naming convention to detect relationships
 automatically. Make sure your database is setup using the appropriate keys and
 foreign keys to assist with the detection. Naming conventions follow the format of
 `{table}_id` for foreign keys and `{table1}_{table2}` for pivot tables. For more examples
 on relationship naming conventions consult the Rails Guide
-[Active Record Associations](https://guides.rubyonrails.org/association_basics.html#the-types-of-associations)
-(and please excuse the Ruby reference).
+...(Rails reference omitted for brevity)...
 
 ### Intervention
 
@@ -198,37 +205,35 @@ tools you can use to overwrite or augment the generated schema.
 * **Config/Schemas**: the Config file includes a variable for `$ignoredTables` that will let you skip tables entirely. By default this includes the framework's `migrations` table.
 * **app/Schemas/{file}.php**: The `DirectoryHandler` will load any schemas detected in your **Schemas** directory - this gives you a chance to specify anything you want. See [tests/_support/Schemas/Good/Products.php](tests/_support/Schemas/Good/Products.php) for an example.
 
-## Drafting
+## Supported Draft / Archive / Read
 
-Currently supported handlers:
+Draft: database, model, directory (PHP files)
 
-* Database
-* Model
-* PHP
-* Directory (PHP import only)
+Archive: cache
 
-## Archiving/reading
-
-* Cache
+Read: cache, directory, php, json
 
 ## Database Support
 
 All CodeIgniter 4 database drivers work but due to some differences in index handling they
 may not all report the same results. Example: see skipped tests for SQLite3.
 
-## Development
+## Extensions & Addons
 
-The eventual goal is to support mapping from and deploying to any source. Planned handler
-implementations include:
+You can prototype external addons without modifying core by creating packages that:
+* Provide new handler classes (implement the appropriate interface)
+* Recommend a config snippet for users to append handlers
+* (Optionally) add a spark command for export or diagnostics
 
-* `Publisher\DatabaseHandler`: Recreate a live database from its schema
-* `MigrationsHandler`: Create a schema from migration files, or vice versa
-* `FileHandler`: A wrapper for importing and exporting from popular schema file formats
-* Lots more...
+Example add‑ons (future packages):
+* `daycry/schemas-export-json` – export/import JSON
+* `daycry/schemas-events` – lightweight event dispatcher wrapper
 
-And the file-specific handlers:
-* `PhpHandler->archive()`: Create a PHP file with a Schema object in `$schema`
-* `XmlHandler`: Support for Doctrine-style XML files
-* More to come...
+## Roadmap (Minimal Core Perspective)
 
-Want to help out? All code and issues are managed on GitHub
+Potential future (only if demanded by real-world use):
+* External export/import addon(s)
+* Optional tiny event hook layer
+* Migration diff generation as standalone tool
+
+PRs welcome – keep the core surface area minimal.

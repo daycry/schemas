@@ -15,70 +15,29 @@ namespace Daycry\Schemas\Structures;
 
 /**
  * Database View Structure
- * 
+ *
  * Represents a database view with its definition and dependencies
  */
-class View extends Mergeable
+final class View extends Mergeable
 {
-    /**
-     * The view name
-     *
-     * @var ?string
-     */
-    public $name;
+    public ?string $name       = null;
+    public ?string $definition = null;
 
     /**
-     * The view definition/SQL
-     *
-     * @var ?string
+     * @var list<string>
      */
-    public $definition;
+    public array $dependencies = [];
 
-    /**
-     * Tables this view depends on
-     *
-     * @var array<string>
-     */
-    public $dependencies = [];
+    public bool $updatable      = false;
+    public string $type         = 'VIEW';
+    public ?string $security    = null;
+    public ?string $checkOption = null;
+    public Mergeable $fields;
+    public ?string $comment = null;
 
-    /**
-     * Whether the view is updatable
-     *
-     * @var bool
-     */
-    public $updatable = false;
-
-    /**
-     * View type (e.g., 'VIEW', 'MATERIALIZED VIEW')
-     *
-     * @var string
-     */
-    public $type = 'VIEW';
-
-    /**
-     * Security type (DEFINER, INVOKER)
-     *
-     * @var ?string
-     */
-    public $security = null;
-
-    /**
-     * Check option (NONE, LOCAL, CASCADED)
-     *
-     * @var ?string
-     */
-    public $checkOption = null;
-
-    /**
-     * View columns information
-     *
-     * @var Mergeable of Field objects
-     */
-    public $fields;
-
-    public function __construct($name = null)
+    public function __construct(?string $name = null)
     {
-        $this->name = $name;
+        $this->name   = $name;
         $this->fields = new Mergeable();
     }
 }

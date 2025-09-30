@@ -15,82 +15,28 @@ namespace Daycry\Schemas\Structures;
 
 /**
  * Database Stored Procedure Structure
- * 
+ *
  * Represents a stored procedure or function
  */
-class Procedure extends Mergeable
+final class Procedure extends Mergeable
 {
-    /**
-     * The procedure name
-     *
-     * @var ?string
-     */
-    public $name;
+    public ?string $name       = null;
+    public string $type        = 'PROCEDURE';
+    public ?string $definition = null;
 
     /**
-     * The procedure type (PROCEDURE, FUNCTION)
-     *
-     * @var string
+     * @var list<array<string,mixed>>
      */
-    public $type = 'PROCEDURE';
+    public array $parameters = [];
 
-    /**
-     * The procedure definition/SQL
-     *
-     * @var ?string
-     */
-    public $definition;
+    public ?string $returnType = null;
+    public ?string $security   = null;
+    public string $language    = 'SQL';
+    public bool $deterministic = false;
+    public ?string $dataAccess = null;
+    public ?string $comment    = null;
 
-    /**
-     * Input parameters
-     *
-     * @var array<array>
-     */
-    public $parameters = [];
-
-    /**
-     * Return type (for functions)
-     *
-     * @var ?string
-     */
-    public $returnType = null;
-
-    /**
-     * Security type (DEFINER, INVOKER)
-     *
-     * @var ?string
-     */
-    public $security = null;
-
-    /**
-     * Language (SQL, PLpgSQL, etc.)
-     *
-     * @var string
-     */
-    public $language = 'SQL';
-
-    /**
-     * Whether the procedure is deterministic
-     *
-     * @var bool
-     */
-    public $deterministic = false;
-
-    /**
-     * Data access characteristics
-     *
-     * @var ?string
-     */
-    public $dataAccess = null;
-
-    /**
-     * Comment/description
-     *
-     * @var ?string
-     */
-    public $comment = null;
-
-    public function __construct($name = null)
+    public function __construct(?string $name = null)
     {
         $this->name = $name;
     }
