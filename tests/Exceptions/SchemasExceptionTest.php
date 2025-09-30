@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of Daycry Schemas.
+ *
+ * (c) Daycry <daycry9@proton.me>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Tests\Exceptions;
 
 use Daycry\Schemas\Exceptions\SchemasException;
@@ -14,15 +23,15 @@ final class SchemasExceptionTest extends TestCase
 {
     public function testFactoryMethodsReturnInstances(): void
     {
-        $e1 = SchemasException::forMissingField('User', 'email');
-        $e2 = SchemasException::forUnsupportedHandler('FooHandler');
-        $e3 = SchemasException::forMethodNotImplemented('Bar', 'do');
-        $e4 = SchemasException::forNoSchema();
-        $e5 = SchemasException::forReaderNotReady();
-        $e6 = SchemasException::forInvalidPluginConfiguration('PluginX');
-        $e7 = SchemasException::forMissingPlugin('PluginY');
-        $e8 = SchemasException::forPluginDependencyNotMet('PluginA', 'PluginB');
-        $e9 = SchemasException::forIncompatiblePlugin('PluginZ', '1.0');
+        $e1  = SchemasException::forMissingField('User', 'email');
+        $e2  = SchemasException::forUnsupportedHandler('FooHandler');
+        $e3  = SchemasException::forMethodNotImplemented('Bar', 'do');
+        $e4  = SchemasException::forNoSchema();
+        $e5  = SchemasException::forReaderNotReady();
+        $e6  = SchemasException::forInvalidPluginConfiguration('PluginX');
+        $e7  = SchemasException::forMissingPlugin('PluginY');
+        $e8  = SchemasException::forPluginDependencyNotMet('PluginA', 'PluginB');
+        $e9  = SchemasException::forIncompatiblePlugin('PluginZ', '1.0');
         $e10 = SchemasException::forPluginAlreadyRegistered('PluginX');
         $e11 = SchemasException::forMissingSchema();
         $e12 = SchemasException::forMissingArchiveHandler('cache');

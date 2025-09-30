@@ -2,14 +2,23 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of Daycry Schemas.
+ *
+ * (c) Daycry <daycry9@proton.me>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Tests\Reader;
 
 use Daycry\Schemas\Config\Schemas;
 use Daycry\Schemas\Reader\Handlers\DatabaseObjectHandler;
 use Daycry\Schemas\Structures\Mergeable;
-use Daycry\Schemas\Structures\View;
 use Daycry\Schemas\Structures\Procedure;
 use Daycry\Schemas\Structures\Trigger;
+use Daycry\Schemas\Structures\View;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -24,32 +33,34 @@ final class DatabaseObjectHandlerExtendedTest extends TestCase
     public function testFetchAllPopulatesContainers(): void
     {
         // Subclass handler to override fetch* methods to populate objects deterministically
-        $handler = new class(new Schemas()) extends DatabaseObjectHandler {
+        $handler = new class (new Schemas()) extends DatabaseObjectHandler {
             protected function fetchViews(): void
             {
                 if (! $this->objects->views) {
                     $this->objects->views = new Mergeable();
                 }
-                $view = new View('users_view');
-                $view->definition = 'SELECT * FROM users';
+                $view                             = new View('users_view');
+                $view->definition                 = 'SELECT * FROM users';
                 $this->objects->views->users_view = $view;
             }
+
             protected function fetchProcedures(): void
             {
                 if (! $this->objects->procedures) {
                     $this->objects->procedures = new Mergeable();
                 }
-                $proc = new Procedure('do_thing');
-                $proc->type = 'PROCEDURE';
+                $proc                                = new Procedure('do_thing');
+                $proc->type                          = 'PROCEDURE';
                 $this->objects->procedures->do_thing = $proc;
             }
+
             protected function fetchTriggers(): void
             {
                 if (! $this->objects->triggers) {
                     $this->objects->triggers = new Mergeable();
                 }
-                $tr = new Trigger('users_trigger');
-                $tr->table = 'users';
+                $tr                                     = new Trigger('users_trigger');
+                $tr->table                              = 'users';
                 $this->objects->triggers->users_trigger = $tr;
             }
         };

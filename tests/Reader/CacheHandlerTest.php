@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of Daycry Schemas.
+ *
+ * (c) Daycry <daycry9@proton.me>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Tests\Reader;
 
 use CodeIgniter\Cache\CacheInterface;
@@ -18,19 +27,65 @@ final class CacheHandlerTest extends TestCase
 {
     public function testEmptyCacheNotReady(): void
     {
-        $cache = new class implements CacheInterface {
+        $cache = new class () implements CacheInterface {
             // minimal in-memory cache
             private array $data = [];
-            public function initialize() { return $this; }
-            public function get($key) { return $this->data[$key] ?? null; }
-            public function save($key, $value, $ttl = 60) { $this->data[$key] = $value; return true; }
-            public function delete($key) { unset($this->data[$key]); return true; }
-            public function increment($key, $offset = 1) { return 0; }
-            public function decrement($key, $offset = 1) { return 0; }
-            public function clean() { $this->data = []; return true; }
-            public function getCacheInfo() { return []; }
-            public function getMetaData($key) { return null; }
-            public function isSupported(): bool { return true; }
+
+            public function initialize()
+            {
+                return $this;
+            }
+
+            public function get($key)
+            {
+                return $this->data[$key] ?? null;
+            }
+
+            public function save($key, $value, $ttl = 60)
+            {
+                $this->data[$key] = $value;
+
+                return true;
+            }
+
+            public function delete($key)
+            {
+                unset($this->data[$key]);
+
+                return true;
+            }
+
+            public function increment($key, $offset = 1)
+            {
+                return 0;
+            }
+
+            public function decrement($key, $offset = 1)
+            {
+                return 0;
+            }
+
+            public function clean()
+            {
+                $this->data = [];
+
+                return true;
+            }
+
+            public function getCacheInfo()
+            {
+                return [];
+            }
+
+            public function getMetaData($key)
+            {
+                return null;
+            }
+
+            public function isSupported(): bool
+            {
+                return true;
+            }
         };
 
         $handler = new CacheHandler(new Schemas(), $cache);
@@ -42,31 +97,87 @@ final class CacheHandlerTest extends TestCase
 
     public function testScaffoldAndLazyLoad(): void
     {
-        $cache = new class implements CacheInterface {
+        $cache = new class () implements CacheInterface {
             private array $data = [];
-            public function initialize() { return $this; }
-            public function get($key) { return $this->data[$key] ?? null; }
-            public function save($key, $value, $ttl = 60) { $this->data[$key] = $value; return true; }
-            public function delete($key) { unset($this->data[$key]); return true; }
-            public function increment($key, $offset = 1) { return 0; }
-            public function decrement($key, $offset = 1) { return 0; }
-            public function clean() { $this->data = []; return true; }
-            public function getCacheInfo() { return []; }
-            public function getMetaData($key) { return null; }
-            public function isSupported(): bool { return true; }
+
+            public function initialize()
+            {
+                return $this;
+            }
+
+            public function get($key)
+            {
+                return $this->data[$key] ?? null;
+            }
+
+            public function save($key, $value, $ttl = 60)
+            {
+                $this->data[$key] = $value;
+
+                return true;
+            }
+
+            public function delete($key)
+            {
+                unset($this->data[$key]);
+
+                return true;
+            }
+
+            public function increment($key, $offset = 1)
+            {
+                return 0;
+            }
+
+            public function decrement($key, $offset = 1)
+            {
+                return 0;
+            }
+
+            public function clean()
+            {
+                $this->data = [];
+
+                return true;
+            }
+
+            public function getCacheInfo()
+            {
+                return [];
+            }
+
+            public function getMetaData($key)
+            {
+                return null;
+            }
+
+            public function isSupported(): bool
+            {
+                return true;
+            }
         };
 
-    $config   = new Schemas();
-    $cacheKey = 'schema-' . ENVIRONMENT; // default naming convention
-    $scaffold = new Mergeable();
-    $scaffold->tables            = new Mergeable();
-    $scaffold->tables->users     = true;
-    $scaffold->tables->posts     = true;
-    $cache->save($cacheKey, $scaffold, 60);
-    $cache->save($cacheKey . '-users', (function () { $t = new Table(); $t->name = 'users'; return $t; })(), 60);
-    $cache->save($cacheKey . '-posts', (function () { $t = new Table(); $t->name = 'posts'; return $t; })(), 60);
-    // Construct handler AFTER seeding cache so constructor ingests scaffold
-    $handler = new CacheHandler($config, $cache);
+        $config                  = new Schemas();
+        $cacheKey                = 'schema-' . ENVIRONMENT; // default naming convention
+        $scaffold                = new Mergeable();
+        $scaffold->tables        = new Mergeable();
+        $scaffold->tables->users = true;
+        $scaffold->tables->posts = true;
+        $cache->save($cacheKey, $scaffold, 60);
+        $cache->save($cacheKey . '-users', (static function () {
+            $t       = new Table();
+            $t->name = 'users';
+
+            return $t;
+        })(), 60);
+        $cache->save($cacheKey . '-posts', (static function () {
+            $t       = new Table();
+            $t->name = 'posts';
+
+            return $t;
+        })(), 60);
+        // Construct handler AFTER seeding cache so constructor ingests scaffold
+        $handler = new CacheHandler($config, $cache);
         $this->assertSame(2, $handler->count());
         // Trigger lazy load for one table
         $userTable = $handler->users; // magic __get loads it

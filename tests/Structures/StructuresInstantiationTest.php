@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of Daycry Schemas.
+ *
+ * (c) Daycry <daycry9@proton.me>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Tests\Structures;
 
 use Daycry\Schemas\Structures\Field;
@@ -17,14 +26,14 @@ final class StructuresInstantiationTest extends TestCase
     public function testFieldFromArray(): void
     {
         $field = new Field([
-            'name' => 'id',
-            'primary_key' => '1', // string to test cast
-            'type' => 'INT',
-            'max_length' => 11,
-            'nullable' => 0,
-            'default' => null,
+            'name'           => 'id',
+            'primary_key'    => '1', // string to test cast
+            'type'           => 'INT',
+            'max_length'     => 11,
+            'nullable'       => 0,
+            'default'        => null,
             'auto_increment' => 1,
-            'comment' => 'Primary key'
+            'comment'        => 'Primary key',
         ]);
         $this->assertSame('id', $field->name);
         $this->assertTrue($field->primary_key);
@@ -37,12 +46,12 @@ final class StructuresInstantiationTest extends TestCase
     public function testForeignKeyFromArrayWithArrays(): void
     {
         $fk = new ForeignKey([
-            'constraint_name' => 'fk_user_role',
-            'column_name' => ['role_id'],
-            'foreign_table_name' => 'roles',
+            'constraint_name'     => 'fk_user_role',
+            'column_name'         => ['role_id'],
+            'foreign_table_name'  => 'roles',
             'foreign_column_name' => ['id'],
-            'on_delete' => 'CASCADE',
-            'on_update' => 'RESTRICT'
+            'on_delete'           => 'CASCADE',
+            'on_update'           => 'RESTRICT',
         ]);
         $this->assertSame('fk_user_role', $fk->constraint_name);
         $this->assertSame('role_id', $fk->column_name);
@@ -52,10 +61,10 @@ final class StructuresInstantiationTest extends TestCase
     public function testIndexFromArray(): void
     {
         $index = new Index([
-            'name' => 'idx_users_email',
+            'name'   => 'idx_users_email',
             'fields' => ['email'],
-            'type' => 'BTREE',
-            'unique' => true
+            'type'   => 'BTREE',
+            'unique' => true,
         ]);
         $this->assertSame('idx_users_email', $index->name);
         $this->assertSame(['email'], $index->fields);

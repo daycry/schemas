@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of Daycry Schemas.
+ *
+ * (c) Daycry <daycry9@proton.me>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Tests\Reader;
 
 use Daycry\Schemas\Config\Schemas;
@@ -19,6 +28,9 @@ class BaseReaderConcrete extends BaseReader
     }
 }
 
+/**
+ * @internal
+ */
 final class BaseReaderTest extends TestCase
 {
     public function testReadyFalseByDefault(): void
@@ -29,18 +41,18 @@ final class BaseReaderTest extends TestCase
 
     public function testEnsureReadySilentFalseThrows(): void
     {
-        $config = new Schemas();
+        $config         = new Schemas();
         $config->silent = false;
-        $reader = new BaseReaderConcrete($config);
+        $reader         = new BaseReaderConcrete($config);
         $this->expectException(SchemasException::class);
         $reader->callEnsureReady();
     }
 
     public function testEnsureReadySilentTrueCollectsError(): void
     {
-        $config = new Schemas();
+        $config         = new Schemas();
         $config->silent = true;
-        $reader = new BaseReaderConcrete($config);
+        $reader         = new BaseReaderConcrete($config);
         $this->assertFalse($reader->callEnsureReady());
         $errors = $reader->getErrors();
         $this->assertNotEmpty($errors);
